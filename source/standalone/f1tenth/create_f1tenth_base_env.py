@@ -12,6 +12,7 @@ from __future__ import annotations
 
 """Launch Isaac Sim Simulator first."""
 
+from rich import print
 
 import argparse
 
@@ -45,14 +46,13 @@ from omni.isaac.orbit.managers import RandomizationTermCfg as RandTerm
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.utils import configclass
 
-from omni.isaac.orbit_tasks.classic.cartpole.cartpole_env_cfg import CartpoleSceneCfg
-
+from omni.isaac.orbit_tasks.f1tenth.f1tenth_env_cfg import F1tenthSceneCfg
 
 @configclass
 class ActionsCfg:
     """Action specifications for the environment."""
-
-    joint_efforts = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=5.0)
+    #TODO: Implement for actions for ackermann action graph 
+    # joint_efforts = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=5.0)
 
 
 @configclass
@@ -66,6 +66,15 @@ class ObservationsCfg:
         # observation terms (order preserved)
         joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
+        
+        # lidar
+        # lidar = ObsTerm(func=mdp.lidar, params={"asset_cfg": SceneEntityCfg("robot", sensor_names=["lidar"])})
+        # wheel odometry
+        # wheel_odometry = ObsTerm(func=mdp.wheel_odometry, params={"asset_cfg": SceneEntityCfg("robot")})
+        # velocity
+        # velocity = ObsTerm(func=mdp.velocity, params={"asset_cfg": SceneEntityCfg("robot")})
+        
+        
 
         def __post_init__(self) -> None:
             self.enable_corruption = False
@@ -80,31 +89,33 @@ class RandomizationCfg:
     """Configuration for randomization."""
 
     # on startup
-    add_pole_mass = RandTerm(
+    add_f1tenth_mass = RandTerm(
         func=mdp.add_body_mass,
         mode="startup",
         params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=["pole"]),
+            "asset_cfg": SceneEntityCfg("robot", body_names=["base_link"]),
             "mass_range": (0.1, 0.5),
         },
     )
 
     # on reset
-    reset_cart_position = RandTerm(
+    reset_rotator_position = RandTerm(
         func=mdp.reset_joints_by_offset,
         mode="reset",
         params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]),
+            "asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left',               
+                                                              'rotator_right']),
             "position_range": (-1.0, 1.0),
             "velocity_range": (-0.1, 0.1),
         },
     )
 
-    reset_pole_position = RandTerm(
+    reset_wheel_position = RandTerm(
         func=mdp.reset_joints_by_offset,
         mode="reset",
         params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]),
+            "asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
+                                                              'wheel_back_right', 'wheel_front_left', 'wheel_front_right']),
             "position_range": (-0.125 * math.pi, 0.125 * math.pi),
             "velocity_range": (-0.01 * math.pi, 0.01 * math.pi),
         },
@@ -112,11 +123,11 @@ class RandomizationCfg:
 
 
 @configclass
-class CartpoleEnvCfg(BaseEnvCfg):
+class F1tenthEnvCfg(BaseEnvCfg):
     """Configuration for the cartpole environment."""
 
     # Scene settings
-    scene = CartpoleSceneCfg(num_envs=1024, env_spacing=2.5)
+    scene = F1tenthSceneCfg(num_envs=1024, env_spacing=2.5)
     # Basic settings
     observations = ObservationsCfg()
     actions = ActionsCfg()
@@ -136,10 +147,12 @@ class CartpoleEnvCfg(BaseEnvCfg):
 def main():
     """Main function."""
     # parse the arguments
-    env_cfg = CartpoleEnvCfg()
+    env_cfg = F1tenthEnvCfg()
+
     env_cfg.scene.num_envs = args_cli.num_envs
-    print(env_cfg)
     # setup base environment
+
+    # return
     env = BaseEnv(cfg=env_cfg)
 
     # simulate physics
@@ -157,7 +170,6 @@ def main():
             # step the environment
             obs, _ = env.step(joint_efforts)
             # print current orientation of pole
-            print("[Env 0]: Pole joint: ", obs["policy"][0][1].item())
             # update counter
             count += 1
 

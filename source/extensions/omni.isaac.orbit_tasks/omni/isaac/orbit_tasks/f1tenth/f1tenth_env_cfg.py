@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import math
+from rich import print
 
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
@@ -17,12 +18,12 @@ from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.orbit.scene import InteractiveSceneCfg
 from omni.isaac.orbit.utils import configclass
 
-import omni.isaac.orbit_tasks.classic.cartpole.mdp as mdp
+import omni.isaac.orbit_tasks.f1tenth.mdp as mdp
 
 ##
 # Pre-defined configs
 ##
-from omni.isaac.orbit_assets.cartpole import CARTPOLE_CFG  # isort:skip
+from omni.isaac.orbit_assets.f1tenth import F1TENTH_CFG  # isort:skip
 
 
 ##
@@ -31,7 +32,7 @@ from omni.isaac.orbit_assets.cartpole import CARTPOLE_CFG  # isort:skip
 
 
 @configclass
-class CartpoleSceneCfg(InteractiveSceneCfg):
+class F1tenthSceneCfg(InteractiveSceneCfg):
     """Configuration for a cart-pole scene."""
 
     # ground plane
@@ -40,9 +41,8 @@ class CartpoleSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0)),
     )
 
-    # cartpole
-    robot: ArticulationCfg = CARTPOLE_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-    # print(ArticulationCfg.actuators)
+    # f1tenth
+    robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
 
     # lights
     dome_light = AssetBaseCfg(
@@ -72,8 +72,9 @@ class CommandsCfg:
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
-
-    joint_effort = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=100.0)
+    speed = mdp.JointVelocityActionCfg(asset_name="robot", joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], scale=1.0)
+    
+    steering_angle = mdp.JointPositionActionCfg(asset_name="robot", joint_names=["rotator_left", "rotator_right"], scale=1.0)
 
 
 @configclass
@@ -100,24 +101,26 @@ class ObservationsCfg:
 class RandomizationCfg:
     """Configuration for randomization."""
 
-    # reset
-    reset_cart_position = RandTerm(
+    # on reset
+    reset_rotator_position = RandTerm(
         func=mdp.reset_joints_by_offset,
         mode="reset",
         params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]),
+            "asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left',               
+                                                              'rotator_right']),
             "position_range": (-1.0, 1.0),
-            "velocity_range": (-0.5, 0.5),
+            "velocity_range": (-0.1, 0.1),
         },
     )
 
-    reset_pole_position = RandTerm(
+    reset_wheel_position = RandTerm(
         func=mdp.reset_joints_by_offset,
         mode="reset",
         params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]),
-            "position_range": (-0.25 * math.pi, 0.25 * math.pi),
-            "velocity_range": (-0.25 * math.pi, 0.25 * math.pi),
+            "asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
+                                                              'wheel_back_right', 'wheel_front_left', 'wheel_front_right']),
+            "position_range": (-0.125 * math.pi, 0.125 * math.pi),
+            "velocity_range": (-0.01 * math.pi, 0.01 * math.pi),
         },
     )
 
@@ -128,26 +131,27 @@ class RewardsCfg:
 
     # (1) Constant running reward
     alive = RewTerm(func=mdp.is_alive, weight=1.0)
-    # (2) Failure penalty
+    # # (2) Failure penalty
     terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
-    # (3) Primary task: keep pole upright
-    pole_pos = RewTerm(
-        func=mdp.joint_pos_target_l2,
-        weight=-1.0,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]), "target": 0.0},
-    )
-    # (4) Shaping tasks: lower cart velocity
-    cart_vel = RewTerm(
+    # # (3) Primary task: keep pole upright
+    # pole_pos = RewTerm(
+    #     func=mdp.joint_pos_target_l2,
+    #     weight=-1.0,
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]), "target": 0.0},
+    # )
+    # # (4) Shaping tasks: lower cart velocity
+    car_vel = RewTerm(
         func=mdp.joint_vel_l1,
-        weight=-0.01,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"])},
+        weight=0.05,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
+                                                              'wheel_back_right', 'wheel_front_left', 'wheel_front_right'])},
     )
-    # (5) Shaping tasks: lower pole angular velocity
-    pole_vel = RewTerm(
-        func=mdp.joint_vel_l1,
-        weight=-0.005,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"])},
-    )
+    # # (5) Shaping tasks: lower pole angular velocity
+    # pole_vel = RewTerm(
+    #     func=mdp.joint_vel_l1,
+    #     weight=-0.005,
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"])},
+    # )
 
 
 @configclass
@@ -157,10 +161,10 @@ class TerminationsCfg:
     # (1) Time out
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     # (2) Cart out of bounds
-    cart_out_of_bounds = DoneTerm(
-        func=mdp.joint_pos_manual_limit,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]), "bounds": (-3.0, 3.0)},
-    )
+    # cart_out_of_bounds = DoneTerm(
+    #     func=mdp.joint_pos_manual_limit,
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]), "bounds": (-3.0, 3.0)},
+    # )
 
 
 @configclass
@@ -176,11 +180,11 @@ class CurriculumCfg:
 
 
 @configclass
-class CartpoleEnvCfg(RLTaskEnvCfg):
+class F1tenthEnvCfg(RLTaskEnvCfg):
     """Configuration for the locomotion velocity-tracking environment."""
 
     # Scene settings
-    scene: CartpoleSceneCfg = CartpoleSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
+    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

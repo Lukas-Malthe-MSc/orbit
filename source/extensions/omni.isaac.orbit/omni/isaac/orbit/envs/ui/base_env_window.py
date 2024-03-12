@@ -81,6 +81,7 @@ class BaseEnvWindow:
                 self._build_viewer_frame()
                 # create collapsable frame for debug visualization
                 self._build_debug_vis_frame()
+                
 
     def __del__(self):
         """Destructor for the window."""

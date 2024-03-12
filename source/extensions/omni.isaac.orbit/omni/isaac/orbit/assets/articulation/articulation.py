@@ -97,7 +97,10 @@ class Articulation(RigidObject):
         # container for data access
         self._data = ArticulationData()
         # data for storing actuator group
-        self.actuators: dict[str, ActuatorBase] = dict.fromkeys(self.cfg.actuators.keys())
+        self.actuators: dict[str, ActuatorBase | None] = dict.fromkeys(self.cfg.actuators.keys())
+        if self.actuators == None:
+            raise RuntimeError("Actuators not found")
+        
 
     """
     Properties
@@ -146,6 +149,7 @@ class Articulation(RigidObject):
             env_ids = slice(None)
         # reset actuators
         for actuator in self.actuators.values():
+            print(f"Resetting actuator: {actuator}")
             actuator.reset(env_ids)
 
     def write_data_to_sim(self):
