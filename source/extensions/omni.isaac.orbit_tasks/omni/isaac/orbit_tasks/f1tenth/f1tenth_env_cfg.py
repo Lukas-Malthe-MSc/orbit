@@ -72,10 +72,12 @@ class CommandsCfg:
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
-    speed = mdp.JointVelocityActionCfg(asset_name="robot", joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], scale=1.0)
     
-    steering_angle = mdp.JointPositionActionCfg(asset_name="robot", joint_names=["rotator_left", "rotator_right"], scale=1.0)
+    # speed = mdp.JointVelocityActionCfg(asset_name="robot", joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], scale=1.0)
 
+    test = mdp.AckermannActionCfg(asset_name="robot", 
+                                  wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
+                                  steering_joint_names=["rotator_left", "rotator_right"])
 
 @configclass
 class ObservationsCfg:
@@ -140,20 +142,26 @@ class RewardsCfg:
     #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]), "target": 0.0},
     # )
     # # (4) Shaping tasks: lower cart velocity
-    car_vel = RewTerm(
-        func=mdp.joint_vel_l1,
-        weight=0.05,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
-                                                              'wheel_back_right', 'wheel_front_left', 'wheel_front_right'])},
-    )
+    # car_vel = RewTerm(
+    #     func=mdp.joint_vel_l1,
+    #     weight=0.05,
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
+    #                                                           'wheel_back_right', 'wheel_front_left', 'wheel_front_right'])},
+    # )
     # # (5) Shaping tasks: lower pole angular velocity
     # pole_vel = RewTerm(
     #     func=mdp.joint_vel_l1,
     #     weight=-0.005,
     #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"])},
     # )
-
-
+    
+    ## (6 MY REWARD) Drive forward
+    upright = RewTerm(func=mdp.upright_posture_bonus, weight=0.1, params={"threshold": 0.93})
+    # (4) Reward for moving in the right direction
+    move_to_target = RewTerm(
+        func=mdp.move_to_target_bonus, weight=0.5, params={"threshold": 0.8, "target_pos": (1000.0, 0.0, 0.0)}
+    )
+    
 @configclass
 class TerminationsCfg:
     """Termination terms for the MDP."""

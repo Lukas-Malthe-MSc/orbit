@@ -52,7 +52,7 @@ from omni.isaac.orbit_tasks.f1tenth.f1tenth_env_cfg import F1tenthSceneCfg
 class ActionsCfg:
     """Action specifications for the environment."""
     #TODO: Implement for actions for ackermann action graph 
-    # joint_efforts = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=5.0)
+    joint_efforts = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=5.0)
 
 
 @configclass

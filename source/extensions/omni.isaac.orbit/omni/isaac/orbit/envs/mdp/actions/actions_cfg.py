@@ -11,7 +11,7 @@ from omni.isaac.orbit.controllers import DifferentialIKControllerCfg
 from omni.isaac.orbit.managers.action_manager import ActionTerm, ActionTermCfg
 from omni.isaac.orbit.utils import configclass
 
-from . import binary_joint_actions, joint_actions, non_holonomic_actions, task_space_actions
+from . import binary_joint_actions, joint_actions, non_holonomic_actions, task_space_actions, ackermann_actions
 
 ##
 # Joint actions.
@@ -217,3 +217,33 @@ class DifferentialInverseKinematicsActionCfg(ActionTermCfg):
     """Scale factor for the action. Defaults to 1.0."""
     controller: DifferentialIKControllerCfg = MISSING
     """The configuration for the differential IK controller."""
+
+
+@configclass
+class AckermannActionCfg(ActionTermCfg):
+    """Configuration for the Ackermann steering action term.
+
+    This action term models a vehicle with Ackermann steering, where actions control
+    the forward velocity and steering angle of the vehicle.
+
+    Attributes:
+        class_type: Reference to the AckermannAction class.
+        velocity_joint_name: The name of the joint or mechanism controlling velocity.
+        steering_joint_name: The name of the joint or mechanism controlling steering.
+        scale: Scale factor for the action components (velocity, steering_angle).
+        offset: Offset factor for the action components, useful for calibration.
+    """
+    class_type: type[ActionTerm] = ackermann_actions.AckermannAction
+
+    wheel_joint_names: list[str] = MISSING
+    """The name of the joint or mechanism controlling the vehicle's velocity."""
+    
+    steering_joint_names: list[str] = MISSING
+    """The name of the joint or mechanism controlling the vehicle's steering angle."""
+
+    scale: tuple[float, float] = (1.0, 1.0)
+    """Scale factors for the action components: (velocity_scale, steering_angle_scale). Defaults to (1.0, 1.0)."""
+
+    offset: tuple[float, float] = (0.0, 0.0)
+    """Offset factors for the action components: (velocity_offset, steering_angle_offset). Defaults to (0.0, 0.0)."""
+
