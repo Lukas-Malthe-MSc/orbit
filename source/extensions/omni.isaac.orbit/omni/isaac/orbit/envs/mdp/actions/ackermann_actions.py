@@ -8,11 +8,8 @@ from __future__ import annotations
 import torch
 from typing import TYPE_CHECKING
 
-import carb
-
 from omni.isaac.orbit.assets.articulation import Articulation
 from omni.isaac.orbit.managers.action_manager import ActionTerm
-from omni.isaac.orbit.utils.math import euler_xyz_from_quat
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import BaseEnv
@@ -70,20 +67,18 @@ class AckermannAction(ActionTerm):
         self._steering_ids = steering_ids
         self._steering_names = steering_names
         
-        
         # Action scaling and offset
         self._scale = torch.tensor(cfg.scale, device=self.device, dtype=torch.float32)
         self._offset = torch.tensor(cfg.offset, device=self.device, dtype=torch.float32)
 
         # Initialize tensors for actions
-        self._raw_actions = torch.zeros(env.num_envs, 2, device=self.device)  # Placeholder for [velocity, steering_angle]
+        self._raw_actions = torch.zeros(env.num_envs, self.action_dim, device=self.device)  # Placeholder for [velocity, steering_angle]
         
-        self.action_ones = torch.ones(env.num_envs, 4, device=self.device)
-        self.action_ones_steering = torch.ones(env.num_envs, 2, device=self.device)
-        
-        self.f1tenth_length = torch.tensor(0.32, device=self.device)
-        self.f1tenth_width = torch.tensor(0.24, device=self.device)
-        self.f1tenth_wheel_rad = torch.tensor(0.062, device=self.device)
+        self.base_length = torch.tensor(cfg.base_length, device=self.device)
+        self.base_width = torch.tensor(cfg.base_width, device=self.device)
+        self.wheel_rad = torch.tensor(cfg.wheel_radius, device=self.device)
+        self.max_speed = torch.tensor(cfg.max_speed, device=self.device)
+        self.max_steering_angle = torch.tensor(cfg.max_steering_angle, device=self.device)
 
     """
     Properties.
@@ -111,7 +106,9 @@ class AckermannAction(ActionTerm):
         # store the raw actions
         self._raw_actions[:] = actions
         
-        self._processed_actions = self.raw_actions * self._scale + self._offset    
+        self._processed_actions = self.raw_actions * self._scale + self._offset
+        self._processed_actions[:, 0] = torch.clamp(self._processed_actions[:, 0], min=-self.max_speed, max=self.max_speed)
+        self._processed_actions[:, 1] = torch.clamp(self._processed_actions[:, 1], min=-self.max_steering_angle, max=self.max_steering_angle)
 
     def apply_actions(self):
 
@@ -127,12 +124,12 @@ class AckermannAction(ActionTerm):
      
         
     def calculate_ackermann_angles_and_velocities(self, target_steering_angle_rad, target_velocity):
-        L = self.f1tenth_length
-        W = self.f1tenth_width
-        wheel_radius = self.f1tenth_wheel_rad
+        L = self.base_length
+        W = self.base_width
+        wheel_radius = self.wheel_rad
         
         # Ensure inputs are PyTorch tensors
-        target_steering_angle_rad = torch.clamp(target_steering_angle_rad.float(), min=-torch.pi/4, max=torch.pi/4)
+        target_steering_angle_rad = target_steering_angle_rad.float()
         target_velocity = target_velocity.float()
         
         # Calculating the turn radius from the steering angle
@@ -145,6 +142,7 @@ class AckermannAction(ActionTerm):
         # Calculate target rotation for each wheel
         target_rotation = target_velocity / wheel_radius
         
+        # TODO: Implement proper wheel speeds for each wheel. This code is inspired from the Ackermann OmniGraph node.
         front_wheel_left_speed = target_rotation 
         front_wheel_right_speed = target_rotation 
         back_wheel_left_speed = target_rotation 

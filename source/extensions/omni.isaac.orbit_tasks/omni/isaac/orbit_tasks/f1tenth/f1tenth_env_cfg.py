@@ -72,12 +72,11 @@ class CommandsCfg:
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
-    
-    # speed = mdp.JointVelocityActionCfg(asset_name="robot", joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], scale=1.0)
-
-    test = mdp.AckermannActionCfg(asset_name="robot", 
+    #   
+    ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
-                                  steering_joint_names=["rotator_left", "rotator_right"])
+                                  steering_joint_names=["rotator_left", "rotator_right"], 
+                                  base_width=0.24, base_length=0.33, wheel_radius=0.062, max_speed=5.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0))
 
 @configclass
 class ObservationsCfg:
@@ -156,11 +155,11 @@ class RewardsCfg:
     # )
     
     ## (6 MY REWARD) Drive forward
-    upright = RewTerm(func=mdp.upright_posture_bonus, weight=0.1, params={"threshold": 0.93})
-    # (4) Reward for moving in the right direction
-    move_to_target = RewTerm(
-        func=mdp.move_to_target_bonus, weight=0.5, params={"threshold": 0.8, "target_pos": (1000.0, 0.0, 0.0)}
-    )
+    # upright = RewTerm(func=mdp.upright_posture_bonus, weight=0.1, params={"threshold": 0.93})
+    # # (4) Reward for moving in the right direction
+    # move_to_target = RewTerm(
+    #     func=mdp.move_to_target_bonus, weight=0.5, params={"threshold": 0.8, "target_pos": (1000.0, 0.0, 0.0)}
+    # )
     
 @configclass
 class TerminationsCfg:
