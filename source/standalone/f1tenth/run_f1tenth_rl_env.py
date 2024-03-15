@@ -13,6 +13,7 @@ from __future__ import annotations
 
 
 import argparse
+from rich import print
 
 from omni.isaac.orbit.app import AppLauncher
 
@@ -48,7 +49,7 @@ def main():
     env_cfg.scene.num_envs = args_cli.num_envs
     # setup RL environment
     env = RLTaskEnv(cfg=env_cfg)
-
+    
     # simulate physics
     count = 0
     while simulation_app.is_running():
@@ -56,16 +57,24 @@ def main():
             # reset
             if count % 300 == 0:
                 count = 0
+            
+                
+                
                 env.reset()
                 print("-" * 80)
                 print("[INFO]: Resetting environment...")
+                
+            
+            
             # sample random actions
             joint_efforts = torch.randn_like(env.action_manager.action)
-            print(f"Joint efforts: {joint_efforts}")
+            # print(f"Joint efforts: {joint_efforts}")
 
             # step the environment
             obs, rew, terminated, truncated, info = env.step(joint_efforts)
-
+            print(f"Observations...: {obs}")
+            # print(f"Reward...: {rew}")
+            # print(env.scene["lidar"])
             # update counter
             count += 1
 

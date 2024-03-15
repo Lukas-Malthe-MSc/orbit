@@ -15,8 +15,10 @@ from omni.isaac.orbit.managers import RandomizationTermCfg as RandTerm
 from omni.isaac.orbit.managers import RewardTermCfg as RewTerm
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
+from omni.isaac.orbit.sensors import RayCasterCfg, patterns, CameraData, RayCaster
 from omni.isaac.orbit.scene import InteractiveSceneCfg
 from omni.isaac.orbit.utils import configclass
+from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 import omni.isaac.orbit_tasks.f1tenth.mdp as mdp
 
@@ -40,10 +42,6 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         prim_path="/World/ground",
         spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0)),
     )
-
-    # f1tenth
-    robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
-
     # lights
     dome_light = AssetBaseCfg(
         prim_path="/World/DomeLight",
@@ -54,6 +52,37 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DistantLightCfg(color=(0.9, 0.9, 0.9), intensity=2500.0),
         init_state=AssetBaseCfg.InitialStateCfg(rot=(0.738, 0.477, 0.477, 0.0)),
     )
+    
+    
+    # f1tenth
+    robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
+
+    # TODO: Ensure that lidar sensor is correctly configured
+    # sensors
+    # lidar = RayCasterCfg(
+    #     prim_path="{ENV_REGEX_NS}/f1tenth/base_link",
+    #     # update_period=0.02,
+    #     # offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
+    #     # attach_yaw_only=True,
+    #     # pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+    #     debug_vis=True,
+    #     mesh_prim_paths=["/World/ground"],
+    # )
+    # ray_caster_cfg = RayCasterCfg(
+    #     prim_path="{ENV_REGEX_NS}/f1tenth/hokuyo_1",
+    #     mesh_prim_paths=["/World/ground"],
+    #     # pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(2.0, 2.0)),
+    #     # attach_yaw_only=True,
+    #     # debug_vis=not args_cli.headless,
+    # )
+    
+    # print(ray_caster_cfg)
+    # lidar = RayCaster(cfg=ray_caster_cfg)
+    
+    # TODO: Add touch sensor that can register collisions with the walls
+    # Check ant_env_cfg.py for an example of how to add a touch sensor
+
+
 
 
 ##
@@ -76,7 +105,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.24, base_length=0.33, wheel_radius=0.062, max_speed=5.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0))
+                                  base_width=0.24, base_length=0.33, wheel_radius=0.062, max_speed=10.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0))
 
 @configclass
 class ObservationsCfg:
@@ -87,8 +116,9 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         # observation terms (order preserved)
-        joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
+        base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
+        actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
             self.enable_corruption = False
@@ -102,28 +132,28 @@ class ObservationsCfg:
 class RandomizationCfg:
     """Configuration for randomization."""
 
-    # on reset
-    reset_rotator_position = RandTerm(
-        func=mdp.reset_joints_by_offset,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left',               
-                                                              'rotator_right']),
-            "position_range": (-1.0, 1.0),
-            "velocity_range": (-0.1, 0.1),
-        },
-    )
+    # # on reset
+    # reset_rotator_position = RandTerm(
+    #     func=mdp.reset_joints_by_offset,
+    #     mode="reset",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left',               
+    #                                                           'rotator_right']),
+    #         "position_range": (-1.0, 1.0),
+    #         "velocity_range": (-0.1, 0.1),
+    #     },
+    # )
 
-    reset_wheel_position = RandTerm(
-        func=mdp.reset_joints_by_offset,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
-                                                              'wheel_back_right', 'wheel_front_left', 'wheel_front_right']),
-            "position_range": (-0.125 * math.pi, 0.125 * math.pi),
-            "velocity_range": (-0.01 * math.pi, 0.01 * math.pi),
-        },
-    )
+    # reset_wheel_position = RandTerm(
+    #     func=mdp.reset_joints_by_offset,
+    #     mode="reset",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
+    #                                                           'wheel_back_right', 'wheel_front_left', 'wheel_front_right']),
+    #         "position_range": (-0.125 * math.pi, 0.125 * math.pi),
+    #         "velocity_range": (-0.01 * math.pi, 0.01 * math.pi),
+    #     },
+    # )
 
 
 @configclass
@@ -134,6 +164,17 @@ class RewardsCfg:
     alive = RewTerm(func=mdp.is_alive, weight=1.0)
     # # (2) Failure penalty
     terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
+    
+    # -- Task
+    velocity = RewTerm(func=mdp.forward_velocity, weight=2.0)
+    
+    # -- Penalty
+    steering_angle_position = RewTerm(
+        func=mdp.joint_pos_target_l2,
+        weight=-0.25,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+    )
+                        
     # # (3) Primary task: keep pole upright
     # pole_pos = RewTerm(
     #     func=mdp.joint_pos_target_l2,
@@ -156,7 +197,7 @@ class RewardsCfg:
     
     ## (6 MY REWARD) Drive forward
     # upright = RewTerm(func=mdp.upright_posture_bonus, weight=0.1, params={"threshold": 0.93})
-    # # (4) Reward for moving in the right direction
+    # (4) Reward for moving in the right direction
     # move_to_target = RewTerm(
     #     func=mdp.move_to_target_bonus, weight=0.5, params={"threshold": 0.8, "target_pos": (1000.0, 0.0, 0.0)}
     # )
@@ -179,7 +220,6 @@ class CurriculumCfg:
     """Configuration for the curriculum."""
 
     pass
-
 
 ##
 # Environment configuration

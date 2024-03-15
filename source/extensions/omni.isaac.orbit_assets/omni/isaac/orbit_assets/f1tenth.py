@@ -19,7 +19,7 @@ F1TENTH_CFG = ArticulationCfg(
         usd_path=f"{F1TNEHT_PROJET_DIR}/robot/instanceable/f1tenth.usd",
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 1.0)
+        pos=(0.0, 0.0, 0.5)
     ),
     actuators={
         "wheels": ImplicitActuatorCfg(
