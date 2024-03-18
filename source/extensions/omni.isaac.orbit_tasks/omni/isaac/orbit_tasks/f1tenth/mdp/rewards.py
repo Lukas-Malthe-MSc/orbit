@@ -24,3 +24,11 @@ def joint_pos_target_l2(env: RLTaskEnv, target: float, asset_cfg: SceneEntityCfg
     joint_pos = wrap_to_pi(asset.data.joint_pos[:, asset_cfg.joint_ids])
     # compute the reward
     return torch.sum(torch.square(joint_pos - target), dim=1)
+
+def forward_velocity(
+    env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    """Root linear velocity in the asset's root frame."""
+    # extract the used quantities (to enable type-hinting)
+    asset: RigidObject = env.scene[asset_cfg.name]
+    # print(asset.data.root_lin_vel_b[:, 0])
+    return asset.data.root_lin_vel_b[:, 0]

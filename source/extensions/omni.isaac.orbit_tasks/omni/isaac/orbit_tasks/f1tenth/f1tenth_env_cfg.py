@@ -59,15 +59,24 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
 
     # TODO: Ensure that lidar sensor is correctly configured
     # sensors
-    # lidar = RayCasterCfg(
-    #     prim_path="{ENV_REGEX_NS}/f1tenth/base_link",
-    #     # update_period=0.02,
-    #     # offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
-    #     # attach_yaw_only=True,
-    #     # pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
-    #     debug_vis=True,
-    #     mesh_prim_paths=["/World/ground"],
-    # )
+    lidar = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/f1tenth/base_link",
+        update_period=0.02,
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
+        attach_yaw_only=True,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+        debug_vis=True,
+        mesh_prim_paths=["/World/ground"],
+    )
+    
+    race_track = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/RaceTrack",
+        collision_group=-1,
+        spawn=sim_utils.UsdFileCfg(
+            usd_path="omniverse://localhost/Projects/f1tenth/race_track.usd",
+            scale=(.01, .01, .01),
+        )
+    )
     # ray_caster_cfg = RayCasterCfg(
     #     prim_path="{ENV_REGEX_NS}/f1tenth/hokuyo_1",
     #     mesh_prim_paths=["/World/ground"],
@@ -116,8 +125,13 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         # observation terms (order preserved)
+        base_pos = ObsTerm(func=mdp.base_pos, noise=Unoise(n_min=-0.1, n_max=0.1))
+        base_rot = ObsTerm(func=mdp.base_rot, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
+        
+        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
+        
         actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
