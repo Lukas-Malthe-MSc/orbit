@@ -12,19 +12,21 @@ from typing import TYPE_CHECKING
 import omni.isaac.orbit.utils.math as math_utils
 from omni.isaac.orbit.assets import Articulation
 from omni.isaac.orbit.managers import SceneEntityCfg
-from omni.isaac.orbit.sensors import RayCaster
+from omni.isaac.orbit.sensors import Lidar
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import BaseEnv
     
-def lidar_ranges(env: BaseEnv, sensor_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+def lidar_ranges(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """The ranges from the given lidar sensor."""
     # extract the used quantities (to enable type-hinting)
-    sensor: RayCaster = env.scene.sensors[sensor_cfg.name]
+    sensor: Lidar = env.scene.sensors[sensor_cfg.name]
+    lidar_ranges = sensor.data.output
+    print(lidar_ranges[0]['pointcloud'])
     # lidar ranges
-    lidar_ranges = sensor.data.ray_hits_w[..., 2]
+    # lidar_ranges = sensor.data.ray_hits_w[..., 2]
     # print(lidar_ranges[0])
-    return lidar_ranges
+    return torch.zeros(size=[1, 1081], device=torch.device("cuda:0")) # lidar_ranges
 
 def base_pos(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root position in the simulation world frame."""

@@ -45,6 +45,7 @@ from omni.isaac.orbit_tasks.f1tenth.f1tenth_env_cfg import F1tenthEnvCfg
 def main():
     """Main function."""
     # parse the arguments
+    torch.cuda.empty_cache()
     env_cfg = F1tenthEnvCfg()
     env_cfg.scene.num_envs = args_cli.num_envs
     # setup RL environment
@@ -72,7 +73,7 @@ def main():
 
             # step the environment
             obs, rew, terminated, truncated, info = env.step(joint_efforts)
-            print(f"Observations...: {obs}")
+            # print(f"Observations...: {obs}")
             # print(f"Reward...: {rew}")
             # print(env.scene["lidar"])
             # update counter

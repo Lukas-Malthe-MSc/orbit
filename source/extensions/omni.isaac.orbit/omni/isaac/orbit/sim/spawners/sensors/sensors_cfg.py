@@ -125,3 +125,37 @@ class FisheyeCameraCfg(PinholeCameraCfg):
     """Fifth component of fisheye polynomial. Defaults to 0.0."""
     fisheye_polynomial_f: float = 0.0
     """Sixth component of fisheye polynomial. Defaults to 0.0."""
+
+
+@configclass
+class LidarSensorCfg(SpawnerCfg):
+    """Configuration parameters for spawning a LiDAR sensor prim."""
+
+    func: Callable = sensors.spawn_camera
+
+    angular_range: float = 360.0
+    """Horizontal field of view (in degrees). Defaults to 360.0."""
+
+    vertical_fov: float = 30.0
+    """Vertical field of view (in degrees). Defaults to 30.0 for 2D LiDAR, simulating a single scan line."""
+
+    resolution: float = 0.1
+    """Angular resolution (in degrees). Determines the spacing between individual rays in the scan."""
+
+    max_distance: float = 100.0
+    """Maximum scanning distance (in meters). Determines how far the sensor can detect surfaces."""
+
+    min_distance: float = 0.1
+    """Minimum scanning distance (in meters). Determines the closest distance the sensor can detect surfaces."""
+
+    num_rays: int = 1080
+    """Number of rays used in the scan. This is another way to specify the resolution."""
+
+    update_period: float = 0.025
+    """Time between sensor updates (in seconds). For a 40Hz LiDAR, this would be 0.025."""
+
+    # Additional parameters as needed, such as sensor noise characteristics or specific scanning patterns.
+
+    def __post_init__(self):
+        # Validate configuration values and adjust if necessary.
+        pass

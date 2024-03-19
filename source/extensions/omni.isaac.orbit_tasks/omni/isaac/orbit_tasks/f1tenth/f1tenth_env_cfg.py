@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import math
+from omni.isaac.orbit.sensors.lidar.lidar_cfg import LidarCfg
+from omni.isaac.orbit.sim.spawners.sensors.sensors_cfg import LidarSensorCfg
 from rich import print
 
 import omni.isaac.orbit.sim as sim_utils
@@ -59,15 +61,33 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
 
     # TODO: Ensure that lidar sensor is correctly configured
     # sensors
-    lidar = RayCasterCfg(
-        prim_path="{ENV_REGEX_NS}/f1tenth/base_link",
-        update_period=0.02,
-        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
-        attach_yaw_only=True,
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
-        debug_vis=True,
-        mesh_prim_paths=["/World/ground"],
+    lidar: LidarCfg = LidarCfg(
+        prim_path="{ENV_REGEX_NS}/f1tenth/hokuyo_1/Lidar",
+        update_period=0.025,  # Update rate of 40Hz
+        # data_types=["point_cloud"],  # Assuming the LiDAR generates point cloud data
+        spawn=None,
+        offset=LidarCfg.OffsetCfg(
+            pos=(0.0, 0.0, 0.2),  # Example position offset from the robot base
+            rot=(1.0, 0.0, 0.0, 0.0),  # Example rotation offset; no rotation in this case
+            convention="ros"  # Frame convention
+        )
     )
+    
+    
+ 
+    # lidar = RayCasterCfg(
+    #     prim_path="{ENV_REGEX_NS}/f1tenth/base_link",
+    #     update_period=0.02,
+    #     offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
+    #     attach_yaw_only=True,
+    #     # pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+    #     pattern_cfg=patterns.BpearlPatternCfg(horizontal_res=0.5, horizontal_fov=270),
+    #     debug_vis=True,
+    #     # mesh_prim_paths=["/World/ground"],
+    #     mesh_prim_paths=["/World/envs"],
+    #     # mesh_prim_paths=["/World/envs/env_0/RaceTrack"],
+    #     # mesh_prim_paths=["/{ENV_REGEX_NS}/RaceTrack"],
+    # )
     
     race_track = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/RaceTrack",
