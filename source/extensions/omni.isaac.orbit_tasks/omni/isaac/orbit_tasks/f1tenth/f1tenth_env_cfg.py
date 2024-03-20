@@ -89,14 +89,14 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     #     # mesh_prim_paths=["/{ENV_REGEX_NS}/RaceTrack"],
     # )
     
-    race_track = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/RaceTrack",
-        collision_group=-1,
-        spawn=sim_utils.UsdFileCfg(
-            usd_path="omniverse://localhost/Projects/f1tenth/race_track.usd",
-            scale=(.01, .01, .01),
-        )
-    )
+    # race_track = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
+    #     collision_group=-1,
+    #     spawn=sim_utils.UsdFileCfg(
+    #         usd_path="omniverse://localhost/Projects/f1tenth/race_track.usd",
+    #         scale=(.01, .01, .01),
+    #     )
+    # )
     # ray_caster_cfg = RayCasterCfg(
     #     prim_path="{ENV_REGEX_NS}/f1tenth/hokuyo_1",
     #     mesh_prim_paths=["/World/ground"],
@@ -152,7 +152,7 @@ class ObservationsCfg:
         
         lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
         
-        actions = ObsTerm(func=mdp.last_action)
+        last_actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
             self.enable_corruption = False

@@ -17,9 +17,11 @@ from rich import print
 import omni.kit.commands
 import omni.usd
 from omni.isaac.core.prims import XFormPrimView
-from pxr import UsdGeom
-import omni.isaac.range_sensor
 
+from pxr import UsdGeom
+
+import omni.isaac.RangeSensorSchema as RangeSensorSchema
+from omni.isaac.range_sensor import _range_sensor
 
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.utils import to_camel_case
@@ -349,19 +351,23 @@ class Lidar(SensorBase):
 
         # For example, you might have a list to hold references to LiDAR sensor prims.
         self._sensor_prims = list()
+        self._sensor_paths = list()
 
         # Search and validate LiDAR sensor prims in the simulation environment
         for lidar_prim_path in self._view.prim_paths:
             lidar_prim = omni.usd.get_context().get_stage().GetPrimAtPath(lidar_prim_path)
             
+            # self.lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(),lidar_prim_path)
+            # self.lidar.GetHorizontalFovAttr().Set(270)
+            # self.lidar.GetHorizontalResolutionAttr().Set(0.25)
+
             # Ensure the prim is valid and represents a LiDAR sensor in your simulation setup.
             # This step may involve checking custom properties or metadata that identify the prim as a LiDAR sensor.
             if lidar_prim and self._is_valid_lidar_prim(lidar_prim):
                 self._sensor_prims.append(lidar_prim)
+                self._sensor_paths.append(lidar_prim_path)
             else:
                 raise RuntimeError(f"Prim at path '{lidar_prim_path}' is not recognized as a valid LiDAR sensor.")
-            
-            print("sensor prins:" + str(self._sensor_prims))
 
             render_prod_path = rep.create.render_product(lidar_prim_path, resolution=[1, 1])
             
@@ -502,11 +508,25 @@ class Lidar(SensorBase):
 
         This function is called after the data has been collected from all the cameras.
         """
-        print(output)
+        # print(output)
+        self._li = _range_sensor.acquire_lidar_sensor_interface()
+        depth = self._li.get_depth_data(self._sensor_paths[0])
+        zenith = self._li.get_zenith_data(self._sensor_paths[0])
+        azimuth = self._li.get_azimuth_data(self._sensor_paths[0])
+        linear_depth = self._li.get_linear_depth_data(self._sensor_paths[0])
+        intensities = self._li.get_intensity_data(self._sensor_paths[0])
+        num_cols = self._li.get_num_cols(self._sensor_paths[0])
+        num_rows = self._li.get_num_rows(self._sensor_paths[0])
+        # exec_out = self._li.get(self._sensor_paths[0])
+        point_cloud = self._li.get_point_cloud_data(self._sensor_paths[0])
+        print(f"point_cloud: {point_cloud}, point_cloud: {point_cloud.shape}, len(point_cloud): {len(point_cloud)}")
+        # print(f"exec_out: {linear_depth}, linear_depth: {linear_depth.shape}")
+        
         # extract info and data from the output
         if isinstance(output, dict):
             data = output["data"]
             info = output["info"]
+            # print(f"info: {info}")
         else:
             data = output
             info = None
@@ -525,3 +545,4 @@ class Lidar(SensorBase):
         super()._invalidate_initialize_callback(event)
         # set all existing views to None to invalidate them
         self._view = None
+
