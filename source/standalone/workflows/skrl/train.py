@@ -40,6 +40,7 @@ args_cli = parser.parse_args()
 # launch the simulator
 # load cheaper kit config in headless
 if args_cli.headless:
+    # app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.kit"
     app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.headless.kit"
 else:
     app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.kit"

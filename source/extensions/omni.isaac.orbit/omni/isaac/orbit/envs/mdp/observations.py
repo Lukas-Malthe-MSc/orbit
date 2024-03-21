@@ -118,6 +118,7 @@ def body_incoming_wrench(env: BaseEnv, asset_cfg: SceneEntityCfg) -> torch.Tenso
     asset: Articulation = env.scene[asset_cfg.name]
     # obtain the link incoming forces in world frame
     link_incoming_forces = asset.root_physx_view.get_link_incoming_joint_force()[:, asset_cfg.body_ids]
+    
     return link_incoming_forces.view(env.num_envs, -1)
 
 

@@ -73,7 +73,7 @@ def main():
 
             # step the environment
             obs, rew, terminated, truncated, info = env.step(joint_efforts)
-            # print(f"Observations...: {obs}")
+            print(f"Observations...: {obs}, length {str(obs['policy'][0].shape)}")
             # print(f"Reward...: {rew}")
             # print(env.scene["lidar"])
             # update counter

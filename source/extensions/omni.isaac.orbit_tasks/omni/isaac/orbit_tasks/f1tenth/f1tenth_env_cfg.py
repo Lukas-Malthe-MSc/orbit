@@ -74,39 +74,16 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     )
     
     
- 
-    # lidar = RayCasterCfg(
-    #     prim_path="{ENV_REGEX_NS}/f1tenth/base_link",
-    #     update_period=0.02,
-    #     offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
-    #     attach_yaw_only=True,
-    #     # pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
-    #     pattern_cfg=patterns.BpearlPatternCfg(horizontal_res=0.5, horizontal_fov=270),
-    #     debug_vis=True,
-    #     # mesh_prim_paths=["/World/ground"],
-    #     mesh_prim_paths=["/World/envs"],
-    #     # mesh_prim_paths=["/World/envs/env_0/RaceTrack"],
-    #     # mesh_prim_paths=["/{ENV_REGEX_NS}/RaceTrack"],
-    # )
     
-    # race_track = AssetBaseCfg(
-    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
-    #     collision_group=-1,
-    #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path="omniverse://localhost/Projects/f1tenth/race_track.usd",
-    #         scale=(.01, .01, .01),
-    #     )
-    # )
-    # ray_caster_cfg = RayCasterCfg(
-    #     prim_path="{ENV_REGEX_NS}/f1tenth/hokuyo_1",
-    #     mesh_prim_paths=["/World/ground"],
-    #     # pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(2.0, 2.0)),
-    #     # attach_yaw_only=True,
-    #     # debug_vis=not args_cli.headless,
-    # )
-    
-    # print(ray_caster_cfg)
-    # lidar = RayCaster(cfg=ray_caster_cfg)
+    race_track = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/RaceTrack",
+        collision_group=-1,
+        spawn=sim_utils.UsdFileCfg(
+            usd_path="omniverse://localhost/Projects/f1tenth/race_track.usd",
+            scale=(.01, .01, .01),
+        )
+    )
+
     
     # TODO: Add touch sensor that can register collisions with the walls
     # Check ant_env_cfg.py for an example of how to add a touch sensor
@@ -151,6 +128,8 @@ class ObservationsCfg:
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
         
         lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
+
+        print(f"lidar_ranges: {lidar_ranges}")
         
         last_actions = ObsTerm(func=mdp.last_action)
 
@@ -208,7 +187,7 @@ class RewardsCfg:
         weight=-0.25,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
     )
-                        
+
     # # (3) Primary task: keep pole upright
     # pole_pos = RewTerm(
     #     func=mdp.joint_pos_target_l2,

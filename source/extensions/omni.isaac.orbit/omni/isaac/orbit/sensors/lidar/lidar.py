@@ -17,11 +17,13 @@ from rich import print
 import omni.kit.commands
 import omni.usd
 from omni.isaac.core.prims import XFormPrimView
+import omni.isaac.RangeSensorSchema as RangeSensorSchema
+# from omni.isaac.core.utils.extensions import enable_extension
+
+# enable_extension("omni.isaac.range_sensor")  # required by OIGE
+from omni.isaac.range_sensor import _range_sensor
 
 from pxr import UsdGeom
-
-import omni.isaac.RangeSensorSchema as RangeSensorSchema
-from omni.isaac.range_sensor import _range_sensor
 
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.utils import to_camel_case
@@ -73,6 +75,7 @@ class Lidar(SensorBase):
     """The set of sensor types that are not supported by the camera class."""
 
     def __init__(self, cfg: LidarCfg):
+        
         """Initializes the camera sensor.
 
         Args:
@@ -116,6 +119,7 @@ class Lidar(SensorBase):
         self._sensor_prims = list()
         # Create empty variables for storing output data
         self._data = LidarData()
+        self._li = _range_sensor.acquire_lidar_sensor_interface()
 
     def __del__(self):
         """Unsubscribes from callbacks and detach from the replicator registry."""
@@ -179,24 +183,16 @@ class Lidar(SensorBase):
     Configuration
     """
 
-    def set_lidar_properties(
-        self,
-        angular_range: float = 360.0,
-        resolution: float = 1.0,
-        max_distance: float = 100.0,
-        env_ids: Sequence[int] | None = None
-    ):
-        """Set parameters of the USD LiDAR prim from the given specifications.
+    # TODO: Get the important information from the lidar
+    def get_lidar_properties(self, env_ids):
 
-        Args:
-            angular_range: The angular range of the LiDAR scan in degrees. Defaults to 360.0.
-            resolution: The angular resolution of the scan in degrees. Defaults to 1.0.
-            max_distance: The maximum distance that the LiDAR can measure. Defaults to 100.0.
-            env_ids: A sequence of environment IDs to manipulate. Defaults to None, which means all sensor indices.
-        """
         # Resolve environment IDs
         if env_ids is None:
             env_ids = self._ALL_INDICES
+
+        # self.lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(),self._sensor_path[idx])
+        # self.lidar.GetHorizontalFovAttr().Set(270)
+        # self.lidar.GetHorizontalResolutionAttr().Set(0.25)
 
         # Iterate over environment IDs
         for i in env_ids:
@@ -206,9 +202,9 @@ class Lidar(SensorBase):
             # Set LiDAR properties
             # Note: The following properties and their assignment to the USD prim are hypothetical
             # and need to be adapted to your specific simulation environment and LiDAR sensor representation.
-            sensor_prim.GetAttribute("angularRange").Set(angular_range)
-            sensor_prim.GetAttribute("resolution").Set(resolution)
-            sensor_prim.GetAttribute("maxDistance").Set(max_distance)
+            # sensor_prim.GetAttribute("angularRange").Set(angular_range)
+            # sensor_prim.GetAttribute("resolution").Set(resolution)
+            # sensor_prim.GetAttribute("maxDistance").Set(max_distance)
 
             # Additional LiDAR-specific properties can be set here as needed.
 
@@ -356,9 +352,9 @@ class Lidar(SensorBase):
         # Search and validate LiDAR sensor prims in the simulation environment
         for lidar_prim_path in self._view.prim_paths:
             lidar_prim = omni.usd.get_context().get_stage().GetPrimAtPath(lidar_prim_path)
-            
-            # self.lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(),lidar_prim_path)
-            # self.lidar.GetHorizontalFovAttr().Set(270)
+
+            # self.lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(),self._sensor_paths[0])
+            # self.lidar.GetEnabledAttr().Set(False)
             # self.lidar.GetHorizontalResolutionAttr().Set(0.25)
 
             # Ensure the prim is valid and represents a LiDAR sensor in your simulation setup.
@@ -395,25 +391,35 @@ class Lidar(SensorBase):
         self._frame[env_ids] += 1
         # -- pose
         self._update_poses(env_ids)
+
+        for index in env_ids:
+            linear_depth = self._li.get_linear_depth_data(self._sensor_paths[index])
+            output = convert_to_torch(linear_depth, device=self.device)
+            self._data.output[index] = output.squeeze()
+
+
+
+
+        
         # -- read the data from annotator registry
         # check if buffer is called for the first time. If so then, allocate the memory
-        if len(self._data.output.sorted_keys) == 0:
-            # this is the first time buffer is called
-            # it allocates memory for all the sensors
-            self._create_annotator_data()
-        else:
-            # iterate over all the data types
-            for name, annotators in self._rep_registry.items():
-                # iterate over all the annotators
-                for index in env_ids:
-                    # get the output
-                    output = annotators[index].get_data()
-                    # process the output
-                    data, info = self._process_annotator_output(output)
-                    # add data to output
-                    self._data.output[name][index] = data
-                    # add info to output
-                    self._data.info[index][name] = info
+        # if len(self._data.output.sorted_keys) == 0:
+        #     # this is the first time buffer is called
+        #     # it allocates memory for all the sensors
+        #     self._create_annotator_data()
+        # else:
+        #     # iterate over all the data types
+        #     for name, annotators in self._rep_registry.items():
+        #         # iterate over all the annotators
+        #         for index in env_ids:
+        #             # get the output
+        #             output = annotators[index].get_data()
+        #             # process the output
+        #             data, info = self._process_annotator_output(output)
+        #             # add data to output
+        #             self._data.output[name][index] = data
+        #             # add info to output
+        #             self._data.info[index][name] = info
 
     """
     Private Helpers
@@ -438,7 +444,6 @@ class Lidar(SensorBase):
         # Pose of the LiDAR sensors in the world
         self._data.pos_w = torch.zeros((self._view.count, 3), device=self._device)
         self._data.quat_w_world = torch.zeros((self._view.count, 4), device=self._device)
-
         # Preparing a buffer for distance measurements. Assuming each LiDAR scan produces a fixed number of measurements,
         # the shape of the distance measurements buffer could be [number_of_sensors, number_of_measurements_per_scan].
         # The exact shape and initialization will depend on your specific sensor configuration and scanning pattern.
@@ -447,7 +452,10 @@ class Lidar(SensorBase):
         # Metadata about each scan, such as the scan sequence number or timestamp, could be useful for analysis or debugging.
         # This information structure is placeholder and can be adapted to your requirements.
         self._data.info = [{"scan_id": None, "timestamp": None} for _ in range(self._view.count)]
-        self._data.output = TensorDict({}, batch_size=self._view.count, device=self.device)
+        # self._data.output = TensorDict({}, batch_size=self._view.count, device=self.device)
+        self._data.output = torch.zeros((self._view.count, self.cfg.num_rays), device=self._device)
+        # self._data.output = {name: torch.zeros((self._view.count, 1081), device=self._device) for name in self.cfg.data_types} # ((num_envs, 1081)) TODO: Make nr. sensor measurements dynamic
+        
         # Note: The 'output' buffer is not explicitly created here, as 'distance_measurements' effectively serves that purpose.
         # If additional output types or formats are required, consider adding them similarly.
 
@@ -509,18 +517,18 @@ class Lidar(SensorBase):
         This function is called after the data has been collected from all the cameras.
         """
         # print(output)
-        self._li = _range_sensor.acquire_lidar_sensor_interface()
-        depth = self._li.get_depth_data(self._sensor_paths[0])
-        zenith = self._li.get_zenith_data(self._sensor_paths[0])
-        azimuth = self._li.get_azimuth_data(self._sensor_paths[0])
-        linear_depth = self._li.get_linear_depth_data(self._sensor_paths[0])
-        intensities = self._li.get_intensity_data(self._sensor_paths[0])
-        num_cols = self._li.get_num_cols(self._sensor_paths[0])
-        num_rows = self._li.get_num_rows(self._sensor_paths[0])
-        # exec_out = self._li.get(self._sensor_paths[0])
-        point_cloud = self._li.get_point_cloud_data(self._sensor_paths[0])
-        print(f"point_cloud: {point_cloud}, point_cloud: {point_cloud.shape}, len(point_cloud): {len(point_cloud)}")
-        # print(f"exec_out: {linear_depth}, linear_depth: {linear_depth.shape}")
+        
+        # depth = self._li.get_depth_data(self._sensor_paths[0])
+        # zenith = self._li.get_zenith_data(self._sensor_paths[0])
+        # azimuth = self._li.get_azimuth_data(self._sensor_paths[0])
+        # linear_depth = self._li.get_linear_depth_data(self._sensor_paths[0])
+        # intensities = self._li.get_intensity_data(self._sensor_paths[0])
+        # num_cols = self._li.get_num_cols(self._sensor_paths[0])
+        # num_rows = self._li.get_num_rows(self._sensor_paths[0])
+        # # exec_out = self._li.get(self._sensor_paths[0])
+        # point_cloud = self._li.get_point_cloud_data(self._sensor_paths[0])
+        # print(f"point_cloud: {point_cloud}, point_cloud: {point_cloud.shape}, len(point_cloud): {len(point_cloud)}")
+        # print(f"exec_out: {np.round(linear_depth)}, linear_depth: {linear_depth.shape}")
         
         # extract info and data from the output
         if isinstance(output, dict):

@@ -40,7 +40,8 @@ class LidarData:
     Shape is (N, M) where N is the number of sensors and M is the number of measurements per sensor.
     """
 
-    output: TensorDict = None
+    # output: TensorDict = None
+    output: torch.Tensor  = None
     """The retrieved sensor data with sensor types as key.
 
     For LiDAR, this might include processed data such as point clouds or enhanced distance measurements,

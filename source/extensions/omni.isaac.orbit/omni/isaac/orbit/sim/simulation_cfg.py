@@ -179,7 +179,7 @@ class SimulationCfg:
     If set to (0.0, 0.0, 0.0), gravity is disabled.
     """
 
-    enable_scene_query_support: bool = False
+    enable_scene_query_support: bool = True
     """Enable/disable scene query support for collision shapes. Default is False.
 
     This flag allows performing collision queries (raycasts, sweeps, and overlaps) on actors and

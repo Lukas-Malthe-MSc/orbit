@@ -22,12 +22,9 @@ def lidar_ranges(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     # extract the used quantities (to enable type-hinting)
     sensor: Lidar = env.scene.sensors[sensor_cfg.name]
     lidar_ranges = sensor.data.output
-    # print("lidar_ranges: " +str(lidar_ranges))
-    # print("lidar_ranges[0]: " +str(lidar_ranges[0]["rgb"]))
-    # lidar ranges
-    # lidar_ranges = sensor.data.ray_hits_w[..., 2]
-    # print(lidar_ranges[0])
-    return torch.zeros(size=[1, 1081], device=torch.device("cuda:0")) # lidar_ranges
+    
+    return lidar_ranges
+
 
 def base_pos(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root position in the simulation world frame."""
