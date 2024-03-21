@@ -145,28 +145,31 @@ class ObservationsCfg:
 class RandomizationCfg:
     """Configuration for randomization."""
 
-    # # on reset
-    # reset_rotator_position = RandTerm(
-    #     func=mdp.reset_joints_by_offset,
-    #     mode="reset",
-    #     params={
-    #         "asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left',               
-    #                                                           'rotator_right']),
-    #         "position_range": (-1.0, 1.0),
-    #         "velocity_range": (-0.1, 0.1),
-    #     },
-    # )
+    # On reset
+    reset_root_state = RandTerm(
+        func=mdp.reset_root_state_uniform,
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg("robot"), 
+            "pose_range": {
+                "x": (-2.5, 2.5),  # X position range from -5 to 5
+                "y": (-2.5, 2.5),  # Y position range from -5 to 5
+                "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
+                "roll": (-0.2, 0.2),  # Roll orientation range from -π to π
+                "pitch": (-0.2, 0.2), # Pitch orientation range from -π to π
+                "yaw": (-3.14, 3.14),   # Yaw orientation range from -π to π
+            }, 
+            "velocity_range": {
+                "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
+                "y": (-1.0, 1.0),  # Y linear velocity range from -1 to 1
+                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                "roll": (-0.5, 0.5),  # Roll angular velocity range
+                "pitch": (-0.5, 0.5), # Pitch angular velocity range
+                "yaw": (-0.5, 0.5),   # Yaw angular velocity range
+            }     
+        },
+    )
 
-    # reset_wheel_position = RandTerm(
-    #     func=mdp.reset_joints_by_offset,
-    #     mode="reset",
-    #     params={
-    #         "asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
-    #                                                           'wheel_back_right', 'wheel_front_left', 'wheel_front_right']),
-    #         "position_range": (-0.125 * math.pi, 0.125 * math.pi),
-    #         "velocity_range": (-0.01 * math.pi, 0.01 * math.pi),
-    #     },
-    # )
 
 
 @configclass
@@ -226,7 +229,12 @@ class TerminationsCfg:
     #     func=mdp.joint_pos_manual_limit,
     #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]), "bounds": (-3.0, 3.0)},
     # )
-
+    
+    too_close_to_obstacle = DoneTerm(
+        func=mdp.lidar_distance_limit,
+        params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.3},
+    )
+    # bad_orientation = DoneTerm(func=mdp.bad_orientation, params={"limit_angle": 1})
 
 @configclass
 class CurriculumCfg:
@@ -244,7 +252,7 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
     """Configuration for the locomotion velocity-tracking environment."""
 
     # Scene settings
-    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
+    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=10.0, replicate_physics=True)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

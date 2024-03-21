@@ -183,6 +183,7 @@ class SkrlSequentialLogTrainer(Trainer):
         # init agent
         self.agents.init(trainer_cfg=self.cfg)
         self.agents.set_running_mode("train")
+
         # reset env
         states, infos = self.env.reset()
         # training loop
@@ -193,9 +194,8 @@ class SkrlSequentialLogTrainer(Trainer):
             with torch.no_grad():
                 actions = self.agents.act(states, timestep=timestep, timesteps=self.timesteps)[0]
             # step the environments
-            next_states, rewards, terminated, truncated, infos = self.env.step(actions)
             
-            print(f"Reward: {rewards}") 
+            next_states, rewards, terminated, truncated, infos = self.env.step(actions)
             
             # note: here we do not call render scene since it is done in the env.step() method
             # record the environments' transitions

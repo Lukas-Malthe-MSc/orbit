@@ -50,7 +50,7 @@ def main():
     env_cfg.scene.num_envs = args_cli.num_envs
     # setup RL environment
     env = RLTaskEnv(cfg=env_cfg)
-    
+
     # simulate physics
     count = 0
     while simulation_app.is_running():
@@ -73,7 +73,10 @@ def main():
 
             # step the environment
             obs, rew, terminated, truncated, info = env.step(joint_efforts)
-            print(f"Observations...: {obs}, length {str(obs['policy'][0].shape)}")
+            # print(f"Observations...: {obs}, length {str(obs['policy'][0].shape)}")
+            
+            ###### PLOT HERE ######
+            
             # print(f"Reward...: {rew}")
             # print(env.scene["lidar"])
             # update counter

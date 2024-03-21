@@ -15,7 +15,7 @@ from ..sensor_base_cfg import SensorBaseCfg
 from .lidar import Lidar
 
 
-@configclass
+@configclass 
 class LidarCfg(SensorBaseCfg):
     """Configuration for a camera sensor."""
 

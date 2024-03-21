@@ -353,8 +353,8 @@ class Lidar(SensorBase):
         for lidar_prim_path in self._view.prim_paths:
             lidar_prim = omni.usd.get_context().get_stage().GetPrimAtPath(lidar_prim_path)
 
-            # self.lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(),self._sensor_paths[0])
-            # self.lidar.GetEnabledAttr().Set(False)
+            # self.lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(),lidar_prim_path)
+            # self.lidar.CreateEnabledAttr().Set(True)
             # self.lidar.GetHorizontalResolutionAttr().Set(0.25)
 
             # Ensure the prim is valid and represents a LiDAR sensor in your simulation setup.
