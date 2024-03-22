@@ -22,6 +22,7 @@ def lidar_ranges(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     # extract the used quantities (to enable type-hinting)
     sensor: Lidar = env.scene.sensors[sensor_cfg.name]
     lidar_ranges = sensor.data.output
+    print(f", num_sensors: {lidar_ranges.shape}")
     return lidar_ranges
 
 

@@ -99,44 +99,24 @@ class Lidar(SensorBase):
         # self._check_supported_data_types(cfg)
         # initialize base class
         super().__init__(cfg)
-
-        # spawn the asset
-        if self.cfg.spawn is not None:
-            # compute the rotation offset
-            rot = torch.tensor(self.cfg.offset.rot, dtype=torch.float32).unsqueeze(0)
-            rot_offset = convert_orientation_convention(rot, origin=self.cfg.offset.convention, target="opengl")
-            rot_offset = rot_offset.squeeze(0).numpy()
-            # spawn the asset
-            self.cfg.spawn.func(
-                self.cfg.prim_path, self.cfg.spawn, translation=self.cfg.offset.pos, orientation=rot_offset
-            )
-        # check that spawn was successful
-        matching_prims = sim_utils.find_matching_prims(self.cfg.prim_path)
-        if len(matching_prims) == 0:
-            raise RuntimeError(f"Could not find prim with path {self.cfg.prim_path}.")
-
-        # UsdGeom Camera prim for the sensor
-        self._sensor_prims = list()
+        
         # Create empty variables for storing output data
         self._data = LidarData()
         self._li = _range_sensor.acquire_lidar_sensor_interface()
+        
+        self.num_beams = int(cfg.horizontal_fov / cfg.horizontal_resolution)
 
     def __del__(self):
         """Unsubscribes from callbacks and detach from the replicator registry."""
         # unsubscribe callbacks
         super().__del__()
         # delete from replicator registry
-        for _, annotators in self._rep_registry.items():
-            for annotator, render_product_path in zip(annotators, self._render_product_paths):
-                annotator.detach([render_product_path])
-                annotator = None
 
     def __str__(self) -> str:
         """Returns: A string containing information about the instance."""
         # message for class
         return (
-            f"Camera @ '{self.cfg.prim_path}': \n"
-            f"\tdata types   : {self.data.output.sorted_keys} \n"
+            f"Lidar @ '{self.cfg.prim_path}': \n"
             f"\tupdate period (s): {self.cfg.update_period}\n"
             # f"\tshape        : {self.image_shape}\n"
             f"\tnumber of sensors : {self._view.count}"
@@ -162,49 +142,41 @@ class Lidar(SensorBase):
         """Frame number when the measurement took place."""
         return self._frame
 
-    @property
-    def render_product_paths(self) -> list[str]:
-        """The path of the render products for the cameras.
-
-        This can be used via replicator interfaces to attach to writes or external annotator registry.
-        """
-        return self._render_product_paths
-
-    @property
-    def scan_properties(self) -> dict:
-        """Provides essential properties of the LiDAR scan."""
-        return {
-            "num_points": self.cfg.num_rays,  # Number of points (rays) in each scan cycle
-            "angular_range": self.cfg.angular_range,  # The angular range covered by the LiDAR scan
-            "resolution": self.cfg.resolution,  # The angular resolution of the LiDAR scan
-        }
 
     """
     Configuration
     """
 
-    # TODO: Get the important information from the lidar
-    def get_lidar_properties(self, env_ids):
+    def set_lidar_properties(self):
+        """"If any value is set to None, the default value is used."""
 
-        # Resolve environment IDs
-        if env_ids is None:
-            env_ids = self._ALL_INDICES
-
-        # self.lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(),self._sensor_path[idx])
-        # self.lidar.GetHorizontalFovAttr().Set(270)
-        # self.lidar.GetHorizontalResolutionAttr().Set(0.25)
+        env_ids = self._ALL_INDICES
 
         # Iterate over environment IDs
         for i in env_ids:
-            # Get corresponding sensor prim
-            sensor_prim = self._sensor_prims[i]
+            # Get corresponding lidar prim path
+            lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(), self._view.prim_paths[i])
 
-            # Set LiDAR properties
-            # Note: The following properties and their assignment to the USD prim are hypothetical
-            # and need to be adapted to your specific simulation environment and LiDAR sensor representation.
-            # sensor_prim.GetAttribute("angularRange").Set(angular_range)
-            # sensor_prim.GetAttribute("resolution").Set(resolution)
-            # sensor_prim.GetAttribute("maxDistance").Set(max_distance)
+            if self.cfg.horizontal_fov is not None:
+                lidar.GetHorizontalFovAttr().Set(self.cfg.horizontal_fov)
+            
+            if self.cfg.horizontal_resolution is not None:
+                lidar.GetHorizontalResolutionAttr().Set(self.cfg.horizontal_resolution)
+                
+            if self.cfg.max_range is not None:
+                lidar.GetMaxRangeAttr().Set(self.cfg.max_range)
+            
+            if self.cfg.min_range is not None:
+                lidar.GetMinRangeAttr().Set(self.cfg.min_range)
+                
+            if self.cfg.rotation_rate is not None:
+                lidar.GetRotationRateAttr().Set(self.cfg.rotation_rate)
+            
+            if self.cfg.vertical_fov is not None:
+                lidar.GetVerticalFovAttr().Set(self.cfg.vertical_fov)
+            
+            if self.cfg.vertical_resolution is not None:
+                lidar.GetVerticalResolutionAttr().Set(self.cfg.vertical_resolution)
 
             # Additional LiDAR-specific properties can be set here as needed.
 
@@ -330,8 +302,7 @@ class Lidar(SensorBase):
 
         # Initialize a frame count buffer
         self._frame = torch.zeros(self._view.count, device=self._device, dtype=torch.long)
-        self._render_product_paths: list[str] = list()
-        self._rep_registry: dict[str, list[rep.annotators.Annotator]] = {name: list() for name in self.cfg.data_types}
+
         
         # Resolve device name
         if "cuda" in self._device:
@@ -339,44 +310,8 @@ class Lidar(SensorBase):
         else:
             device_name = "cpu"
         
-        # NOTE: For LiDAR, the concept of "render products" might not apply in the same way as cameras, depending on your simulation setup.
-        # If your LiDAR simulation outputs data that can be directly utilized (e.g., point clouds), you may not need to register with a replicator registry.
-        # Below lines are placeholders for any LiDAR-specific initialization you may need.
-
-        # Initialize any LiDAR-specific buffers or settings here.
-
-        # For example, you might have a list to hold references to LiDAR sensor prims.
-        self._sensor_prims = list()
-        self._sensor_paths = list()
-
-        # Search and validate LiDAR sensor prims in the simulation environment
-        for lidar_prim_path in self._view.prim_paths:
-            lidar_prim = omni.usd.get_context().get_stage().GetPrimAtPath(lidar_prim_path)
-
-            # self.lidar = RangeSensorSchema.Lidar.Define(omni.usd.get_context().get_stage(),lidar_prim_path)
-            # self.lidar.CreateEnabledAttr().Set(True)
-            # self.lidar.GetHorizontalResolutionAttr().Set(0.25)
-
-            # Ensure the prim is valid and represents a LiDAR sensor in your simulation setup.
-            # This step may involve checking custom properties or metadata that identify the prim as a LiDAR sensor.
-            if lidar_prim and self._is_valid_lidar_prim(lidar_prim):
-                self._sensor_prims.append(lidar_prim)
-                self._sensor_paths.append(lidar_prim_path)
-            else:
-                raise RuntimeError(f"Prim at path '{lidar_prim_path}' is not recognized as a valid LiDAR sensor.")
-
-            render_prod_path = rep.create.render_product(lidar_prim_path, resolution=[1, 1])
-            
-            
-            for name in self.cfg.data_types:
-            
-                rep_annotator = rep.AnnotatorRegistry.get_annotator(name, device=device_name)
-                
-                rep_annotator.attach(render_prod_path)
-            
-                self._rep_registry[name].append(rep_annotator)
-
-        print(f"Replicator registry: {self._rep_registry}")
+        self.set_lidar_properties()
+ 
         # Create internal buffers for LiDAR data
         self._create_buffers()
 
@@ -393,33 +328,9 @@ class Lidar(SensorBase):
         self._update_poses(env_ids)
 
         for index in env_ids:
-            linear_depth = self._li.get_linear_depth_data(self._sensor_paths[index])
+            linear_depth = self._li.get_linear_depth_data(self._view.prim_paths[index])
             output = convert_to_torch(linear_depth, device=self.device)
             self._data.output[index] = output.squeeze()
-
-
-
-
-        
-        # -- read the data from annotator registry
-        # check if buffer is called for the first time. If so then, allocate the memory
-        # if len(self._data.output.sorted_keys) == 0:
-        #     # this is the first time buffer is called
-        #     # it allocates memory for all the sensors
-        #     self._create_annotator_data()
-        # else:
-        #     # iterate over all the data types
-        #     for name, annotators in self._rep_registry.items():
-        #         # iterate over all the annotators
-        #         for index in env_ids:
-        #             # get the output
-        #             output = annotators[index].get_data()
-        #             # process the output
-        #             data, info = self._process_annotator_output(output)
-        #             # add data to output
-        #             self._data.output[name][index] = data
-        #             # add info to output
-        #             self._data.info[index][name] = info
 
     """
     Private Helpers
@@ -444,20 +355,8 @@ class Lidar(SensorBase):
         # Pose of the LiDAR sensors in the world
         self._data.pos_w = torch.zeros((self._view.count, 3), device=self._device)
         self._data.quat_w_world = torch.zeros((self._view.count, 4), device=self._device)
-        # Preparing a buffer for distance measurements. Assuming each LiDAR scan produces a fixed number of measurements,
-        # the shape of the distance measurements buffer could be [number_of_sensors, number_of_measurements_per_scan].
-        # The exact shape and initialization will depend on your specific sensor configuration and scanning pattern.
-        self._data.distance_measurements = torch.zeros((self._view.count, self.cfg.num_rays), device=self._device)
-
-        # Metadata about each scan, such as the scan sequence number or timestamp, could be useful for analysis or debugging.
-        # This information structure is placeholder and can be adapted to your requirements.
-        self._data.info = [{"scan_id": None, "timestamp": None} for _ in range(self._view.count)]
-        # self._data.output = TensorDict({}, batch_size=self._view.count, device=self.device)
-        self._data.output = torch.zeros((self._view.count, self.cfg.num_rays), device=self._device)
-        # self._data.output = {name: torch.zeros((self._view.count, 1081), device=self._device) for name in self.cfg.data_types} # ((num_envs, 1081)) TODO: Make nr. sensor measurements dynamic
+        self._data.output = torch.zeros((self._view.count, self.num_beams), device=self._device)
         
-        # Note: The 'output' buffer is not explicitly created here, as 'distance_measurements' effectively serves that purpose.
-        # If additional output types or formats are required, consider adding them similarly.
 
 
 
@@ -470,78 +369,11 @@ class Lidar(SensorBase):
         Returns:
             A tuple of the position (in meters) and quaternion (w, x, y, z).
         """
-        # check camera prim exists
-        if len(self._sensor_prims) == 0:
-            raise RuntimeError("Camera prim is None. Please call 'sim.play()' first.")
 
         # get the poses from the view
         poses, quat = self._view.get_world_poses(env_ids)
         self._data.pos_w[env_ids] = poses
         self._data.quat_w_world[env_ids] = convert_orientation_convention(quat, origin="opengl", target="world")
-
-    def _create_annotator_data(self):
-        """Create the buffers to store the annotator data.
-
-        We create a buffer for each annotator and store the data in a dictionary. Since the data
-        shape is not known beforehand, we create a list of buffers and concatenate them later.
-
-        This is an expensive operation and should be called only once.
-        """
-        # add data from the annotators
-        for name, annotators in self._rep_registry.items():
-            # create a list to store the data for each annotator
-            data_all_cameras = list()
-            # iterate over all the annotators
-            
-            for index in self._ALL_INDICES:
-                # get the output
-                
-                # Debugging prints
-                print(annotators[0].get_name())
-                #len
-                # print(len(annotators[index].get_data()))
-                
-                output = annotators[index].get_data()
-                # process the output
-                data, info = self._process_annotator_output(output)
-                # append the data
-                data_all_cameras.append(data)
-                # store the info
-                self._data.info[index][name] = info
-            # concatenate the data along the batch dimension
-            self._data.output[name] = torch.stack(data_all_cameras, dim=0)
-
-    def _process_annotator_output(self, output: Any) -> tuple[torch.tensor, dict]:
-        """Process the annotator output.
-
-        This function is called after the data has been collected from all the cameras.
-        """
-        # print(output)
-        
-        # depth = self._li.get_depth_data(self._sensor_paths[0])
-        # zenith = self._li.get_zenith_data(self._sensor_paths[0])
-        # azimuth = self._li.get_azimuth_data(self._sensor_paths[0])
-        # linear_depth = self._li.get_linear_depth_data(self._sensor_paths[0])
-        # intensities = self._li.get_intensity_data(self._sensor_paths[0])
-        # num_cols = self._li.get_num_cols(self._sensor_paths[0])
-        # num_rows = self._li.get_num_rows(self._sensor_paths[0])
-        # # exec_out = self._li.get(self._sensor_paths[0])
-        # point_cloud = self._li.get_point_cloud_data(self._sensor_paths[0])
-        # print(f"point_cloud: {point_cloud}, point_cloud: {point_cloud.shape}, len(point_cloud): {len(point_cloud)}")
-        # print(f"exec_out: {np.round(linear_depth)}, linear_depth: {linear_depth.shape}")
-        
-        # extract info and data from the output
-        if isinstance(output, dict):
-            data = output["data"]
-            info = output["info"]
-            # print(f"info: {info}")
-        else:
-            data = output
-            info = None
-        # convert data into torch tensor
-        data = convert_to_torch(data, device=self.device)
-        # return the data and info
-        return data, info
 
     """
     Internal simulation callbacks.

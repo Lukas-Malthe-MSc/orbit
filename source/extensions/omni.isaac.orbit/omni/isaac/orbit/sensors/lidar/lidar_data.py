@@ -34,11 +34,6 @@ class LidarData:
     # LiDAR data
     ##
 
-    distance_measurements: torch.Tensor = None
-    """The distance measurements for each LiDAR sensor.
-
-    Shape is (N, M) where N is the number of sensors and M is the number of measurements per sensor.
-    """
 
     # output: TensorDict = None
     output: torch.Tensor  = None
@@ -46,12 +41,6 @@ class LidarData:
 
     For LiDAR, this might include processed data such as point clouds or enhanced distance measurements,
     depending on the sensor's capabilities and the processing applied.
-    """
-
-    info: list[dict[str, Any]] = None
-    """Additional metadata or information provided by the LiDAR sensor.
-
-    This might include scan identifiers, timestamps, or other details relevant to interpreting the LiDAR data.
     """
 
     ##

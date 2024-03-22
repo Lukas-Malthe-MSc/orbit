@@ -60,14 +60,18 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
 
     # TODO: Ensure that lidar sensor is correctly configured
-    # sensors
+    # # sensors
     lidar: LidarCfg = LidarCfg(
         prim_path="{ENV_REGEX_NS}/f1tenth/hokuyo_1/Lidar",
-        update_period=0.025,  # Update rate of 40Hz
+        # update_period=0.025,  # Update rate of 40Hz
         # data_types=["point_cloud"],  # Assuming the LiDAR generates point cloud data
-        spawn=None,
+        horizontal_fov=270.0,  # Horizontal field of view of 270 degrees
+        horizontal_resolution=0.2497,  # Horizontal resolution of 0.5 degrees
+        max_range=30.0,  # Maximum range of 30 meters
+        min_range=None,  # Minimum range of 0.1 meters
+        rotation_rate=0.0,  # Rotation rate of 0.0 radians per second
         offset=LidarCfg.OffsetCfg(
-            pos=(0.0, 0.0, 0.2),  # Example position offset from the robot base
+            pos=(0.11749, 0.0, 0.1),  # Example position offset from the robot base
             rot=(1.0, 0.0, 0.0, 0.0),  # Example rotation offset; no rotation in this case
             convention="ros"  # Frame convention
         )
@@ -128,8 +132,6 @@ class ObservationsCfg:
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
         
         lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
-
-        print(f"lidar_ranges: {lidar_ranges}")
         
         last_actions = ObsTerm(func=mdp.last_action)
 
@@ -144,7 +146,6 @@ class ObservationsCfg:
 @configclass
 class RandomizationCfg:
     """Configuration for randomization."""
-
     # On reset
     reset_root_state = RandTerm(
         func=mdp.reset_root_state_uniform,
@@ -273,4 +274,4 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
         # viewer settings
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings
-        self.sim.dt = 1 / 120
+        self.sim.dt = 1 / 40  # 120
