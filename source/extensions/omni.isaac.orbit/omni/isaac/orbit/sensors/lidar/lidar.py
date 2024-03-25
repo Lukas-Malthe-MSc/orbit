@@ -303,7 +303,6 @@ class Lidar(SensorBase):
         # Initialize a frame count buffer
         self._frame = torch.zeros(self._view.count, device=self._device, dtype=torch.long)
 
-        
         # Resolve device name
         if "cuda" in self._device:
             device_name = self._device.split(":")[0]
@@ -336,20 +335,6 @@ class Lidar(SensorBase):
     Private Helpers
     """
 
-    def _check_supported_data_types(self, cfg: LidarCfg):
-        """Checks if the data types are supported by the ray-caster camera."""
-        # check if there is any intersection in unsupported types
-        # reason: these use np structured data types which we can't yet convert to torch tensor
-        common_elements = set(cfg.data_types) & Lidar.UNSUPPORTED_TYPES
-        if common_elements:
-            raise ValueError(
-                f"Camera class does not support the following sensor types: {common_elements}."
-                "\n\tThis is because these sensor types output numpy structured data types which"
-                "can't be converted to torch tensors easily."
-                "\n\tHint: If you need to work with these sensor types, we recommend using the single camera"
-                " implementation from the omni.isaac.orbit.compat.camera module."
-            )
-            
     def _create_buffers(self):
         """Create buffers for storing LiDAR distance measurement data."""
         # Pose of the LiDAR sensors in the world
@@ -357,8 +342,6 @@ class Lidar(SensorBase):
         self._data.quat_w_world = torch.zeros((self._view.count, 4), device=self._device)
         self._data.output = torch.zeros((self._view.count, self.num_beams), device=self._device)
         
-
-
 
     def _update_poses(self, env_ids: Sequence[int]):
         """Computes the pose of the camera in the world frame with ROS convention.

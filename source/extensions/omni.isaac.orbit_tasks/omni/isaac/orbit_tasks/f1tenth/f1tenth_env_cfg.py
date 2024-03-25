@@ -77,13 +77,11 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         )
     )
     
-    
-    
     race_track = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/RaceTrack",
         collision_group=-1,
         spawn=sim_utils.UsdFileCfg(
-            usd_path="omniverse://localhost/Projects/f1tenth/race_track.usd",
+            usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
             scale=(.01, .01, .01),
         )
     )
@@ -146,19 +144,45 @@ class ObservationsCfg:
 @configclass
 class RandomizationCfg:
     """Configuration for randomization."""
+
     # On reset
+    # reset_root_state = RandTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("robot"), 
+    #         "pose_range": {
+    #             "x": (-2.5, 2.5),  # X position range from -5 to 5
+    #             "y": (-2.5, 2.5),  # Y position range from -5 to 5
+    #             "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
+    #             "roll": (-0.2, 0.2),  # Roll orientation range from -π to π
+    #             "pitch": (-0.2, 0.2), # Pitch orientation range from -π to π
+    #             "yaw": (-3.14, 3.14),   # Yaw orientation range from -π to π
+    #         }, 
+    #         "velocity_range": {
+    #             "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
+    #             "y": (-1.0, 1.0),  # Y linear velocity range from -1 to 1
+    #             "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+    #             "roll": (-0.5, 0.5),  # Roll angular velocity range
+    #             "pitch": (-0.5, 0.5), # Pitch angular velocity range
+    #             "yaw": (-0.5, 0.5),   # Yaw angular velocity range
+    #         }     
+    #     },
+    # )
+
+
     reset_root_state = RandTerm(
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot"), 
             "pose_range": {
-                "x": (-2.5, 2.5),  # X position range from -5 to 5
-                "y": (-2.5, 2.5),  # Y position range from -5 to 5
+                "x": (-0.3, 0.3),  # X position range from -5 to 5
+                "y": (-0.3, 0.3),  # Y position range from -5 to 5
                 "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (-0.2, 0.2),  # Roll orientation range from -π to π
                 "pitch": (-0.2, 0.2), # Pitch orientation range from -π to π
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -π to π
+                "yaw": (-1, 1),   # Yaw orientation range from -π to π
             }, 
             "velocity_range": {
                 "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
@@ -172,51 +196,30 @@ class RandomizationCfg:
     )
 
 
-
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
 
     # (1) Constant running reward
-    alive = RewTerm(func=mdp.is_alive, weight=1.0)
+    # alive = RewTerm(func=mdp.is_alive, weight=1.0)
     # # (2) Failure penalty
     terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
     
     # -- Task
-    velocity = RewTerm(func=mdp.forward_velocity, weight=2.0)
+    # velocity = RewTerm(func=mdp.forward_velocity, weight=2.0)
+    # sum_lidars = RewTerm(func=mdp.lidar_distance_sum, weight=-1.0, params={"sensor_cfg": SceneEntityCfg("lidar")})
+    
+    # -- Task: Move to center of track
+    lidar_deviation = RewTerm(func=mdp.lidar_mean_absolute_deviation, weight=-1.0, params={"sensor_cfg": SceneEntityCfg("lidar")})
+    
+    # Task: Move to position
+    # move_to_position = RewTerm(func=mdp.move_to_position, weight=-1.0, params={"target": (2.0, -2.0), "asset_cfg": SceneEntityCfg("robot")})
     
     # -- Penalty
-    steering_angle_position = RewTerm(
-        func=mdp.joint_pos_target_l2,
-        weight=-0.25,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
-    )
-
-    # # (3) Primary task: keep pole upright
-    # pole_pos = RewTerm(
+    # steering_angle_position = RewTerm(
     #     func=mdp.joint_pos_target_l2,
     #     weight=-1.0,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]), "target": 0.0},
-    # )
-    # # (4) Shaping tasks: lower cart velocity
-    # car_vel = RewTerm(
-    #     func=mdp.joint_vel_l1,
-    #     weight=0.05,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['wheel_back_left', 
-    #                                                           'wheel_back_right', 'wheel_front_left', 'wheel_front_right'])},
-    # )
-    # # (5) Shaping tasks: lower pole angular velocity
-    # pole_vel = RewTerm(
-    #     func=mdp.joint_vel_l1,
-    #     weight=-0.005,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"])},
-    # )
-    
-    ## (6 MY REWARD) Drive forward
-    # upright = RewTerm(func=mdp.upright_posture_bonus, weight=0.1, params={"threshold": 0.93})
-    # (4) Reward for moving in the right direction
-    # move_to_target = RewTerm(
-    #     func=mdp.move_to_target_bonus, weight=0.5, params={"threshold": 0.8, "target_pos": (1000.0, 0.0, 0.0)}
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
     # )
     
 @configclass
@@ -233,9 +236,10 @@ class TerminationsCfg:
     
     too_close_to_obstacle = DoneTerm(
         func=mdp.lidar_distance_limit,
-        params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.3},
+        params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.35},
     )
-    # bad_orientation = DoneTerm(func=mdp.bad_orientation, params={"limit_angle": 1})
+    
+
 
 @configclass
 class CurriculumCfg:
@@ -270,7 +274,7 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 5
+        self.episode_length_s = 10
         # viewer settings
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings

@@ -30,7 +30,7 @@ models:
 # https://skrl.readthedocs.io/en/latest/modules/skrl.agents.ppo.html
 agent:
   rollouts: 16
-  learning_epochs: 2 # 5
+  learning_epochs: 2
   mini_batches: 8
   discount_factor: 0.99
   lambda: 0.95
@@ -63,4 +63,4 @@ agent:
 # Sequential trainer
 # https://skrl.readthedocs.io/en/latest/modules/skrl.trainers.sequential.html
 trainer:
-  timesteps: 1200 # 2400
+  timesteps: 2400

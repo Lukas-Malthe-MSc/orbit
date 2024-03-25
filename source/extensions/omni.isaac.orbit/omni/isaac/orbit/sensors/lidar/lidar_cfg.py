@@ -48,23 +48,23 @@ class LidarCfg(SensorBaseCfg):
         camera at path ``/World/envs/env_0/Robot/Camera`` is ``/World/envs/env_0/Robot``.
     """
 
-    horizontal_fov: None | float = 360.0
+    horizontal_fov: float = 360.0
     """The horizontal field of view of the lidar in degrees. Defaults to 360.0."""
     
-    horizontal_resolution: None | float = 0.4
-    """The horizontal resolution of the lidar. Defaults to 0.4."""
+    horizontal_resolution: float = 0.4
+    """The horizontal resolution of the lidar. Defaults to None."""
     
-    max_range: None | float = 100.0
-    """The maximum range of the lidar in meters. Defaults to 100.0."""
+    max_range: None | float = None
+    """The maximum range of the lidar in meters. Defaults to None."""
     
-    min_range: None | float = 0.1
-    """The minimum range of the lidar in meters. Defaults to 0.1."""
+    min_range: None | float = None
+    """The minimum range of the lidar in meters. Defaults to None."""
     
-    rotation_rate: None | float = 0.0
-    """The rotation rate of the lidar in radians per second. Defaults to 0.0."""
+    rotation_rate: None | float = None
+    """The rotation rate of the lidar in radians per second. Defaults to None."""
     
-    vertical_fov: None | float = 30.0
-    """The vertical field of view of the lidar in degrees. Defaults to 30.0."""
+    vertical_fov: None | float = None
+    """The vertical field of view of the lidar in degrees. Defaults to None."""
     
-    vertical_resolution: None | float = 4.0
-    """The vertical resolution of the lidar. Defaults to 1."""
+    vertical_resolution: None | float = None
+    """The vertical resolution of the lidar. Defaults to None."""
