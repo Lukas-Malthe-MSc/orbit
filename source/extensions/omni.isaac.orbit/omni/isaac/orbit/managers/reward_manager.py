@@ -16,6 +16,7 @@ from .manager_base import ManagerBase, ManagerTermBase
 from .manager_term_cfg import RewardTermCfg
 
 from rich import print as rich_print
+from rich.table import Table
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
@@ -119,35 +120,81 @@ class RewardManager(ManagerBase):
         return extras
 
     def compute(self, dt: float) -> torch.Tensor:
-        """Computes the reward signal as a weighted sum of individual terms.
-
-        This function calls each reward term managed by the class and adds them to compute the net
-        reward signal. It also updates the episodic sums corresponding to individual reward terms.
-
-        Args:
-            dt: The time-step interval of the environment.
-
-        Returns:
-            The net reward signal of shape (num_envs,).
-        """
-        # reset computation
         self._reward_buf[:] = 0.0
-        
+        debug = False  # Set to False to disable debug information
+
+        if debug:
+            debug_info = {'Name': [], 'Weight': [], 'Value': [], 'Weighted Value': []}
+
         for name, term_cfg in zip(self._term_names, self._term_cfgs):
-            # skip if weight is zero (kind of a micro-optimization)
-            
-            print(f"name: {name}, val: {str(term_cfg.func(self._env, **term_cfg.params))}")
-            
             if term_cfg.weight == 0.0:
                 continue
-            # compute term's value
+
             value = term_cfg.func(self._env, **term_cfg.params) * term_cfg.weight * dt
-            # update total reward
+            
+            if debug:
+                debug_info['Name'].append(name)
+                debug_info['Weight'].append(term_cfg.weight)
+                debug_value = term_cfg.func(self._env, **term_cfg.params).item()
+                debug_info['Value'].append(debug_value)
+                debug_info['Weighted Value'].append(value.item())
+            
+            
+            
+
             self._reward_buf += value
-            # update episodic sum
             self._episode_sums[name] += value
 
+
+        if debug:
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("Name", style="dim", width=20)
+            table.add_column("Weight", justify="right")
+            table.add_column("Value", justify="right")
+            table.add_column("W*Val*dt", justify="right")
+
+            for i in range(len(debug_info['Name'])):
+                table.add_row(debug_info['Name'][i], f"{debug_info['Weight'][i]:.4f}",
+                              f"{debug_info['Value'][i]:.4f}", f"{debug_info['Weighted Value'][i]:.4f}")
+
+            # Add the total reward sum row
+            total_reward = self._reward_buf.item() if isinstance(self._reward_buf, torch.Tensor) else self._reward_buf
+            table.add_row("Total reward sum", "", f"([italic]dt={dt}[/italic])", f"{total_reward:.4f}")
+
+            rich_print(table)
+
         return self._reward_buf
+
+    # def compute(self, dt: float) -> torch.Tensor:
+    #     """Computes the reward signal as a weighted sum of individual terms.
+
+    #     This function calls each reward term managed by the class and adds them to compute the net
+    #     reward signal. It also updates the episodic sums corresponding to individual reward terms.
+
+    #     Args:
+    #         dt: The time-step interval of the environment.
+
+    #     Returns:
+    #         The net reward signal of shape (num_envs,).
+    #     """
+    #     # reset computation
+    #     self._reward_buf[:] = 0.0
+        
+    #     for name, term_cfg in zip(self._term_names, self._term_cfgs):
+    #         # skip if weight is zero (kind of a micro-optimization)
+            
+    #         print(f"name: {name}, val: {str(term_cfg.func(self._env, **term_cfg.params))}")
+            
+    #         if term_cfg.weight == 0.0:
+    #             continue
+    #         # compute term's value
+    #         value = term_cfg.func(self._env, **term_cfg.params) * term_cfg.weight * dt
+    #         # update total reward
+    #         self._reward_buf += value
+    #         # update episodic sum
+    #         self._episode_sums[name] += value
+
+    #     return self._reward_buf
 
     """
     Operations - Term settings.
