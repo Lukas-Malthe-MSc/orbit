@@ -77,14 +77,15 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         )
     )
     
-    race_track = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/RaceTrack",
-        collision_group=-1,
-        spawn=sim_utils.UsdFileCfg(
-            usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-            scale=(.01, .01, .01),
-        )
-    )
+    # race_track = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
+    #     collision_group=-1,
+    #     spawn=sim_utils.UsdFileCfg(
+    #         # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
+    #         usd_path="omniverse://localhost/Projects/f1tenth/racetrack_square.usd",
+    #         scale=(.01, .01, .01),
+    #     )
+    # )
 
     
     # TODO: Add touch sensor that can register collisions with the walls
@@ -182,7 +183,7 @@ class RandomizationCfg:
                 "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (-0.2, 0.2),  # Roll orientation range from -π to π
                 "pitch": (-0.2, 0.2), # Pitch orientation range from -π to π
-                "yaw": (-1, 1),   # Yaw orientation range from -π to π
+                "yaw": (-3.14, 3.14),   # Yaw orientation range from -π to π
             }, 
             "velocity_range": {
                 "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
@@ -203,24 +204,29 @@ class RewardsCfg:
     # (1) Constant running reward
     # alive = RewTerm(func=mdp.is_alive, weight=1.0)
     # # (2) Failure penalty
-    terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
+    terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
     
-    # -- Task
-    # velocity = RewTerm(func=mdp.forward_velocity, weight=2.0)
-    # sum_lidars = RewTerm(func=mdp.lidar_distance_sum, weight=-1.0, params={"sensor_cfg": SceneEntityCfg("lidar")})
+    # -- Task: Drive forward
+    velocity = RewTerm(func=mdp.forward_velocity, weight=1.0)
     
     # -- Task: Move to center of track
-    lidar_deviation = RewTerm(func=mdp.lidar_mean_absolute_deviation, weight=-1.0, params={"sensor_cfg": SceneEntityCfg("lidar")})
+    # lidar_deviation = RewTerm(func=mdp.lidar_mean_absolute_deviation, weight=-1.0, params={"sensor_cfg": SceneEntityCfg("lidar")})
     
-    # Task: Move to position
-    # move_to_position = RewTerm(func=mdp.move_to_position, weight=-1.0, params={"target": (2.0, -2.0), "asset_cfg": SceneEntityCfg("robot")})
+    # -- Task: Move to position
+    # move_to_position = RewTerm(func=mdp.move_to_position, weight=-1.0, params={"target": (5.0, 4.0), "asset_cfg": SceneEntityCfg("robot")})
     
     # -- Penalty
-    # steering_angle_position = RewTerm(
-    #     func=mdp.joint_pos_target_l2,
-    #     weight=-1.0,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
-    # )
+    steering_angle_position = RewTerm(
+        func=mdp.joint_pos_target_l2,
+        weight=-0.05,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+    )
+    
+    # -- Penalty
+    # min_lidar_distance = RewTerm(
+    #     func=mdp.lidar_min_distance,
+    #     weight=-0.1,
+    #     params={"sensor_cfg": SceneEntityCfg("lidar")})
     
 @configclass
 class TerminationsCfg:
@@ -257,7 +263,7 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
     """Configuration for the locomotion velocity-tracking environment."""
 
     # Scene settings
-    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=10.0, replicate_physics=True)
+    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=12.0, replicate_physics=True)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

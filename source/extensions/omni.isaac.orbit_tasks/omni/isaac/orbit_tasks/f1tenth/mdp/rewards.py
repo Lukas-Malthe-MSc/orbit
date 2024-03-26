@@ -9,9 +9,11 @@ import torch
 from typing import TYPE_CHECKING
 
 from omni.isaac.orbit.assets import Articulation
+from omni.isaac.orbit.assets import RigidObject
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.utils.math import wrap_to_pi
 from omni.isaac.orbit.sensors import Lidar
+
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
@@ -33,6 +35,7 @@ def forward_velocity(
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
 
+    # return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
     return asset.data.root_lin_vel_b[:, 0]
 
 def lidar_distance_sum(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
@@ -52,6 +55,13 @@ def lidar_mean_absolute_deviation(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) ->
     mean = torch.mean(lidar_ranges, dim=1)
     absolute_deviation = torch.abs(lidar_ranges - mean.unsqueeze(1))
     return torch.mean(absolute_deviation, dim=1)
+
+def lidar_min_distance(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    """The min distance of the lidar scans."""
+    sensor: Lidar = env.scene[sensor_cfg.name]
+    lidar_ranges = sensor.data.output
+    min_distances = torch.min(lidar_ranges, dim=1).values
+    return 1/min_distances
 
 # move to position x, y
 def move_to_position(env: RLTaskEnv, target: torch.Tensor, asset_cfg: SceneEntityCfg) -> torch.Tensor:

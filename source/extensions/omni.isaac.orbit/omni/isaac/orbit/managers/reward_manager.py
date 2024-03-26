@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING
 from .manager_base import ManagerBase, ManagerTermBase
 from .manager_term_cfg import RewardTermCfg
 
+from rich import print as rich_print
+
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
 
@@ -130,9 +132,12 @@ class RewardManager(ManagerBase):
         """
         # reset computation
         self._reward_buf[:] = 0.0
-        # iterate over all the reward terms
+        
         for name, term_cfg in zip(self._term_names, self._term_cfgs):
             # skip if weight is zero (kind of a micro-optimization)
+            
+            print(f"name: {name}, val: {str(term_cfg.func(self._env, **term_cfg.params))}")
+            
             if term_cfg.weight == 0.0:
                 continue
             # compute term's value
