@@ -104,6 +104,9 @@ class AckermannAction(ActionTerm):
 
     def process_actions(self, actions):
         # store the raw actions
+        # actions[:, 0] = torch.clamp(actions[:, 0], min=2., max=2.)
+        # actions[:, 1] = torch.clamp(actions[:, 1], min=0.1, max=0.1)
+        
         self._raw_actions[:] = actions
         
         self._processed_actions = self.raw_actions * self._scale + self._offset
@@ -117,6 +120,9 @@ class AckermannAction(ActionTerm):
             target_steering_angle_rad=self.processed_actions[:, 1] # Steering angle for all cars
         )
         wheel_angles = torch.stack([left_rotator_angle, right_rotator_angle], dim=1)
+
+        # wheel_angles = torch.zeros(wheel_speeds.shape[0], 2, device=self.device)
+        # wheel_speeds = torch.ones(wheel_speeds.shape[0], 4, device=self.device)
 
         self._asset.set_joint_velocity_target(wheel_speeds, joint_ids=self._wheel_ids)
         self._asset.set_joint_position_target(wheel_angles, joint_ids=self._steering_ids)

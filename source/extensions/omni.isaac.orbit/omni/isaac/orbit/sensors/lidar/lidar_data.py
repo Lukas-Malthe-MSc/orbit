@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import torch
 from dataclasses import dataclass
-from tensordict import TensorDict
-from typing import Any
 
 from .utils import convert_orientation_convention
 

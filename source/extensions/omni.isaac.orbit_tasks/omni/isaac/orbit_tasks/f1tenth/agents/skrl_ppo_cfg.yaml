@@ -63,7 +63,7 @@ agent:
 # Sequential trainer
 # https://skrl.readthedocs.io/en/latest/modules/skrl.trainers.sequential.html
 trainer:
-  timesteps: 1000 #12000
+  timesteps: 600 #12000
 
 
 

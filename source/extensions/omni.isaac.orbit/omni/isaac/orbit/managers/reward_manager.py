@@ -138,9 +138,6 @@ class RewardManager(ManagerBase):
                 debug_value = term_cfg.func(self._env, **term_cfg.params).item()
                 debug_info['Value'].append(debug_value)
                 debug_info['Weighted Value'].append(value.item())
-            
-            
-            
 
             self._reward_buf += value
             self._episode_sums[name] += value

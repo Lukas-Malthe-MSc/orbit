@@ -60,7 +60,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
 
     # TODO: Ensure that lidar sensor is correctly configured
-    # # sensors
+    # sensors
     lidar: LidarCfg = LidarCfg(
         prim_path="{ENV_REGEX_NS}/f1tenth/hokuyo_1/Lidar",
         # update_period=0.025,  # Update rate of 40Hz
@@ -77,15 +77,15 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         )
     )
     
-    # race_track = AssetBaseCfg(
-    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
-    #     collision_group=-1,
-    #     spawn=sim_utils.UsdFileCfg(
-    #         # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-    #         usd_path="omniverse://localhost/Projects/f1tenth/racetrack_square.usd",
-    #         scale=(.01, .01, .01),
-    #     )
-    # )
+    race_track = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/RaceTrack",
+        collision_group=-1,
+        spawn=sim_utils.UsdFileCfg(
+            # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
+            usd_path="omniverse://localhost/Projects/f1tenth/racetrack_square.usd",
+            scale=(.01, .01, .01),
+        )
+    )
 
     
     # TODO: Add touch sensor that can register collisions with the walls
@@ -125,12 +125,12 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         # observation terms (order preserved)
-        base_pos = ObsTerm(func=mdp.base_pos, noise=Unoise(n_min=-0.1, n_max=0.1))
-        base_rot = ObsTerm(func=mdp.base_rot, noise=Unoise(n_min=-0.1, n_max=0.1))
+        # base_pos = ObsTerm(func=mdp.base_pos, noise=Unoise(n_min=-0.1, n_max=0.1))
+        # base_rot = ObsTerm(func=mdp.base_rot, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
-        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         
-        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
+        # lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
         
         last_actions = ObsTerm(func=mdp.last_action)
 
@@ -202,7 +202,7 @@ class RewardsCfg:
     """Reward terms for the MDP."""
 
     # (1) Constant running reward
-    # alive = RewTerm(func=mdp.is_alive, weight=1.0)
+    alive = RewTerm(func=mdp.is_alive, weight=1.0)
     # # (2) Failure penalty
     terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
     
@@ -222,7 +222,7 @@ class RewardsCfg:
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
     )
     
-    # -- Penalty
+    # # -- Penalty
     # min_lidar_distance = RewTerm(
     #     func=mdp.lidar_min_distance,
     #     weight=-0.1,
@@ -240,10 +240,10 @@ class TerminationsCfg:
     #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]), "bounds": (-3.0, 3.0)},
     # )
     
-    too_close_to_obstacle = DoneTerm(
-        func=mdp.lidar_distance_limit,
-        params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.35},
-    )
+    # too_close_to_obstacle = DoneTerm(
+    #     func=mdp.lidar_distance_limit,
+    #     params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.35},
+    # )
     
 
 

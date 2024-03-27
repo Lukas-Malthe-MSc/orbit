@@ -8,7 +8,6 @@ from __future__ import annotations
 from dataclasses import MISSING
 from typing import Literal
 
-from omni.isaac.orbit.sim import FisheyeCameraCfg, PinholeCameraCfg
 from omni.isaac.orbit.utils import configclass
 
 from ..sensor_base_cfg import SensorBaseCfg

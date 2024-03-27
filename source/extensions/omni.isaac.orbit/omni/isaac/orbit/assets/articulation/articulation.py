@@ -149,7 +149,7 @@ class Articulation(RigidObject):
             env_ids = slice(None)
         # reset actuators
         for actuator in self.actuators.values():
-            print(f"Resetting actuator: {actuator}")
+            # print(f"Resetting actuator: {actuator}")
             actuator.reset(env_ids)
 
     def write_data_to_sim(self):
