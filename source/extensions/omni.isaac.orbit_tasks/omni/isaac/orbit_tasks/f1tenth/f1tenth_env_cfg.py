@@ -156,9 +156,9 @@ class RandomizationCfg:
     #             "x": (-2.5, 2.5),  # X position range from -5 to 5
     #             "y": (-2.5, 2.5),  # Y position range from -5 to 5
     #             "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
-    #             "roll": (-0.2, 0.2),  # Roll orientation range from -π to π
-    #             "pitch": (-0.2, 0.2), # Pitch orientation range from -π to π
-    #             "yaw": (-3.14, 3.14),   # Yaw orientation range from -π to π
+    #             "roll": (-0.2, 0.2),  # Roll orientation range from -pi to pi
+    #             "pitch": (-0.2, 0.2), # Pitch orientation range from -pi to pi
+    #             "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
     #         }, 
     #         "velocity_range": {
     #             "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
@@ -181,9 +181,9 @@ class RandomizationCfg:
                 "x": (-0.3, 0.3),  # X position range from -5 to 5
                 "y": (-0.3, 0.3),  # Y position range from -5 to 5
                 "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (-0.2, 0.2),  # Roll orientation range from -π to π
-                "pitch": (-0.2, 0.2), # Pitch orientation range from -π to π
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -π to π
+                "roll": (-0.2, 0.2),  # Roll orientation range from -pi to pi
+                "pitch": (-0.2, 0.2), # Pitch orientation range from -pi to pi
+                "yaw": (-3.14, 3.12),   # Yaw orientation range from -pi to pi
             }, 
             "velocity_range": {
                 "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1

@@ -20,7 +20,7 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
 class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
     max_iterations = 10
-    save_interval = 50
+    save_interval = 10
     experiment_name = "f1tenth"
     empirical_normalization = False
     policy = RslRlPpoActorCriticCfg(
