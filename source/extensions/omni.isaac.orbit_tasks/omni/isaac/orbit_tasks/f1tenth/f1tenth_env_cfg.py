@@ -114,7 +114,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.24, base_length=0.33, wheel_radius=0.062, max_speed=10.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0))
+                                  base_width=0.24, base_length=0.33, wheel_radius=0.062, max_speed=2.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -130,7 +130,7 @@ class ObservationsCfg:
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         
-        # lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
+        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
         
         last_actions = ObsTerm(func=mdp.last_action)
 
@@ -146,44 +146,19 @@ class ObservationsCfg:
 class RandomizationCfg:
     """Configuration for randomization."""
 
-    # On reset
-    # reset_root_state = RandTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "asset_cfg": SceneEntityCfg("robot"), 
-    #         "pose_range": {
-    #             "x": (-2.5, 2.5),  # X position range from -5 to 5
-    #             "y": (-2.5, 2.5),  # Y position range from -5 to 5
-    #             "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
-    #             "roll": (-0.2, 0.2),  # Roll orientation range from -pi to pi
-    #             "pitch": (-0.2, 0.2), # Pitch orientation range from -pi to pi
-    #             "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-    #         }, 
-    #         "velocity_range": {
-    #             "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
-    #             "y": (-1.0, 1.0),  # Y linear velocity range from -1 to 1
-    #             "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-    #             "roll": (-0.5, 0.5),  # Roll angular velocity range
-    #             "pitch": (-0.5, 0.5), # Pitch angular velocity range
-    #             "yaw": (-0.5, 0.5),   # Yaw angular velocity range
-    #         }     
-    #     },
-    # )
-
-
     reset_root_state = RandTerm(
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot"), 
             "pose_range": {
-                "x": (-0.3, 0.3),  # X position range from -5 to 5
+                # "x": (-0.3, 0.3),  # X position range from -5 to 5
+                "x": (3.0, 3.5),  # X position range from -5 to 5
                 "y": (-0.3, 0.3),  # Y position range from -5 to 5
                 "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (-0.2, 0.2),  # Roll orientation range from -pi to pi
                 "pitch": (-0.2, 0.2), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.12),   # Yaw orientation range from -pi to pi
+                "yaw": (-0.1, 0.1),   # Yaw orientation range from -pi to pi
             }, 
             "velocity_range": {
                 "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
@@ -202,9 +177,9 @@ class RewardsCfg:
     """Reward terms for the MDP."""
 
     # (1) Constant running reward
-    alive = RewTerm(func=mdp.is_alive, weight=1.0)
+    alive = RewTerm(func=mdp.is_alive, weight=0.5)
     # # (2) Failure penalty
-    terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
+    # terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
     
     # -- Task: Drive forward
     velocity = RewTerm(func=mdp.forward_velocity, weight=1.0)
@@ -216,17 +191,17 @@ class RewardsCfg:
     # move_to_position = RewTerm(func=mdp.move_to_position, weight=-1.0, params={"target": (5.0, 4.0), "asset_cfg": SceneEntityCfg("robot")})
     
     # -- Penalty
-    steering_angle_position = RewTerm(
-        func=mdp.joint_pos_target_l2,
-        weight=-0.05,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
-    )
+    # steering_angle_position = RewTerm(
+    #     func=mdp.joint_pos_target_l2,
+    #     weight=-0.05,
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+    # )
     
     # # -- Penalty
-    # min_lidar_distance = RewTerm(
-    #     func=mdp.lidar_min_distance,
-    #     weight=-0.1,
-    #     params={"sensor_cfg": SceneEntityCfg("lidar")})
+    min_lidar_distance = RewTerm(
+        func=mdp.lidar_min_distance,
+        weight=-0.1,
+        params={"sensor_cfg": SceneEntityCfg("lidar")})
     
 @configclass
 class TerminationsCfg:

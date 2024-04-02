@@ -61,6 +61,7 @@ def lidar_min_distance(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tens
     sensor: Lidar = env.scene[sensor_cfg.name]
     lidar_ranges = sensor.data.output
     min_distances = torch.min(lidar_ranges, dim=1).values
+    print(f"lidar ranges: {lidar_ranges}")
     return 1/min_distances
 
 # move to position x, y
