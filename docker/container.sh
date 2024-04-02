@@ -60,6 +60,38 @@ check_docker_version() {
     fi
 }
 
+# Produces container_profile, add_profiles, and add_envs from the image_extension arg
+resolve_image_extension() {
+    # If no profile was passed, we default to 'base'
+    container_profile=${1:-"base"}
+
+    # We also default to 'base' if "orbit" is passed
+    if [ "$1" == "orbit" ]; then
+        container_profile="base"
+    fi
+
+    add_profiles="--profile $container_profile"
+    # We will need .env.base regardless of profile
+    add_envs="--env-file .env.base"
+    # The second argument is interpreted as the profile to use.
+    # We will select the base profile by default.
+    # This will also determine the .env file that is loaded
+    if [ "$container_profile" != "base" ]; then
+        # We have to load multiple .env files here in order to combine
+        # them for the args from base required for extensions, (i.e. DOCKER_USER_HOME)
+        add_envs="$add_envs --env-file .env.$container_profile"
+    fi
+}
+
+# Prints a warning message and exits if the passed container is not running
+is_container_running() {
+    container_name="$1"
+    if [ "$( docker container inspect -f '{{.State.Status}}' $container_name 2> /dev/null)" != "running" ]; then
+        echo "[Error] The '$container_name' container is not running!" >&2;
+        exit 1
+    fi
+}
+
 #==
 # Main
 #==
@@ -79,27 +111,31 @@ fi
 
 # parse arguments
 mode="$1"
+resolve_image_extension $2
 # resolve mode
 case $mode in
     start)
-        echo "[INFO] Building the docker image and starting the container in the background..."
+        echo "[INFO] Building the docker image and starting the container orbit-$container_profile in the background..."
         pushd ${SCRIPT_DIR} > /dev/null 2>&1
-        docker compose --file docker-compose.yaml up --detach --build --remove-orphans
+        # We have to build the base image as a separate step,
+        # in case we are building a profile which depends
+        # upon
+        docker compose --file docker-compose.yaml --env-file .env.base build orbit-base
+        docker compose --file docker-compose.yaml $add_profiles $add_envs up --detach --build --remove-orphans
         popd > /dev/null 2>&1
         ;;
     enter)
-        echo "[INFO] Entering the existing 'orbit' container in a bash session..."
+        # Check that desired container is running, exit if it isn't
+        is_container_running orbit-$container_profile
+        echo "[INFO] Entering the existing 'orbit-$container_profile' container in a bash session..."
         pushd ${SCRIPT_DIR} > /dev/null 2>&1
-        docker exec --interactive --tty orbit bash
+        docker exec --interactive --tty orbit-$container_profile bash
         popd > /dev/null 2>&1
         ;;
     copy)
-        # check if the container is running
-        if [ "$( docker container inspect -f '{{.State.Status}}' orbit 2> /dev/null)" != "running" ]; then
-            echo "[Error] The 'orbit' container is not running! It must be running to copy files from it." >&2;
-            exit 1
-        fi
-        echo "[INFO] Copying artifacts from the 'orbit' container..."
+        # Check that desired container is running, exit if it isn't
+        is_container_running orbit-$container_profile
+        echo "[INFO] Copying artifacts from the 'orbit-$container_profile' container..."
         echo -e "\t - /workspace/orbit/logs -> ${SCRIPT_DIR}/artifacts/logs"
         echo -e "\t - /workspace/orbit/docs/_build -> ${SCRIPT_DIR}/artifacts/docs/_build"
         echo -e "\t - /workspace/orbit/data_storage -> ${SCRIPT_DIR}/artifacts/data_storage"
@@ -115,16 +151,18 @@ case $mode in
         mkdir -p ./artifacts/docs
 
         # copy the artifacts
-        docker cp orbit:/workspace/orbit/logs ./artifacts/logs
-        docker cp orbit:/workspace/orbit/docs/_build ./artifacts/docs/_build
-        docker cp orbit:/workspace/orbit/data_storage ./artifacts/data_storage
+        docker cp orbit-$container_profile:/workspace/orbit/logs ./artifacts/logs
+        docker cp orbit-$container_profile:/workspace/orbit/docs/_build ./artifacts/docs/_build
+        docker cp orbit-$container_profile:/workspace/orbit/data_storage ./artifacts/data_storage
         echo -e "\n[INFO] Finished copying the artifacts from the container."
         popd > /dev/null 2>&1
         ;;
     stop)
-        echo "[INFO] Stopping the launched docker container..."
+        # Check that desired container is running, exit if it isn't
+        is_container_running orbit-$container_profile
+        echo "[INFO] Stopping the launched docker container orbit-$container_profile..."
         pushd ${SCRIPT_DIR} > /dev/null 2>&1
-        docker compose --file docker-compose.yaml down
+        docker compose --file docker-compose.yaml $add_profiles $add_envs down
         popd > /dev/null 2>&1
         ;;
     push)
@@ -133,10 +171,10 @@ case $mode in
         fi
         # Check if Docker version is greater than 25
         check_docker_version
-        # Check if .env file exists
-        if [ -f $SCRIPT_DIR/.env ]; then
+        # Check if .env.base file exists
+        if [ -f $SCRIPT_DIR/.env.base ]; then
             # source env file to get cluster login and path information
-            source $SCRIPT_DIR/.env
+            source $SCRIPT_DIR/.env.base
             # clear old exports
             sudo rm -r -f /$SCRIPT_DIR/exports
             mkdir -p /$SCRIPT_DIR/exports
@@ -147,21 +185,21 @@ case $mode in
             tar -cvf /$SCRIPT_DIR/exports/orbit.tar orbit.sif
             scp /$SCRIPT_DIR/exports/orbit.tar $CLUSTER_LOGIN:$CLUSTER_SIF_PATH/orbit.tar
         else
-            echo "[Error]: ".env" file not found."
+            echo "[Error]: ".env.base" file not found."
         fi
         ;;
     job)
         # Check if .env file exists
-        if [ -f $SCRIPT_DIR/.env ]; then
+        if [ -f $SCRIPT_DIR/.env.base ]; then
             # Sync orbit code
             echo "[INFO] Syncing orbit code..."
-            source $SCRIPT_DIR/.env
+            source $SCRIPT_DIR/.env.base
             rsync -rh  --exclude="*.git*" --filter=':- .dockerignore'  /$SCRIPT_DIR/.. $CLUSTER_LOGIN:$CLUSTER_ORBIT_DIR
             # execute job script
             echo "[INFO] Executing job script..."
             ssh $CLUSTER_LOGIN "cd $CLUSTER_ORBIT_DIR && sbatch $CLUSTER_ORBIT_DIR/docker/cluster/submit_job.sh" "$CLUSTER_ORBIT_DIR" "${@:2}"
         else
-            echo "[Error]: ".env" file not found."
+            echo "[Error]: ".env.base" file not found."
         fi
         ;;
     *)

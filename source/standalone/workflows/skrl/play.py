@@ -16,7 +16,6 @@ from __future__ import annotations
 
 
 import argparse
-import os
 
 from omni.isaac.orbit.app import AppLauncher
 
@@ -37,14 +36,13 @@ args_cli = parser.parse_args()
 # launch omniverse app
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
+
 """Rest everything follows."""
 
-
 import gymnasium as gym
+import os
 import torch
-import traceback
 
-import carb
 from skrl.agents.torch.ppo import PPO, PPO_DEFAULT_CONFIG
 from skrl.utils.model_instantiators.torch import deterministic_model, gaussian_model, shared_model
 
@@ -151,13 +149,7 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        # run the main execution
-        main()
-    except Exception as err:
-        carb.log_error(err)
-        carb.log_error(traceback.format_exc())
-        raise
-    finally:
-        # close sim app
-        simulation_app.close()
+    # run the main function
+    main()
+    # close sim app
+    simulation_app.close()

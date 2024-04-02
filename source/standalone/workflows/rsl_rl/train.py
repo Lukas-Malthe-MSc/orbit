@@ -11,7 +11,6 @@ from __future__ import annotations
 
 
 import argparse
-import os
 
 from omni.isaac.orbit.app import AppLauncher
 
@@ -37,26 +36,17 @@ cli_args.add_rsl_rl_args(parser)
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
 
-# load cheaper kit config in headless
-if args_cli.headless:
-    app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.gym.headless.kit"
-else:
-    app_experience = f"{os.environ['EXP_PATH']}/omni.isaac.sim.python.kit"
-
 # launch omniverse app
-app_launcher = AppLauncher(args_cli, experience=app_experience)
+app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
 """Rest everything follows."""
 
-
 import gymnasium as gym
 import os
 import torch
-import traceback
 from datetime import datetime
 
-import carb
 from rsl_rl.runners import OnPolicyRunner
 
 from omni.isaac.orbit.envs import RLTaskEnvCfg
@@ -137,13 +127,7 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        # run the main execution
-        main()
-    except Exception as err:
-        carb.log_error(err)
-        carb.log_error(traceback.format_exc())
-        raise
-    finally:
-        # close sim app
-        simulation_app.close()
+    # run the main function
+    main()
+    # close sim app
+    simulation_app.close()

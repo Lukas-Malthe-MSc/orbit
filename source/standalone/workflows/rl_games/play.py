@@ -9,7 +9,6 @@ from __future__ import annotations
 
 """Launch Isaac Sim Simulator first."""
 
-
 import argparse
 
 from omni.isaac.orbit.app import AppLauncher
@@ -44,9 +43,7 @@ import gymnasium as gym
 import math
 import os
 import torch
-import traceback
 
-import carb
 from rl_games.common import env_configurations, vecenv
 from rl_games.common.player import BasePlayer
 from rl_games.torch_runner import Runner
@@ -147,13 +144,7 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        # run the main execution
-        main()
-    except Exception as err:
-        carb.log_error(err)
-        carb.log_error(traceback.format_exc())
-        raise
-    finally:
-        # close sim app
-        simulation_app.close()
+    # run the main function
+    main()
+    # close sim app
+    simulation_app.close()

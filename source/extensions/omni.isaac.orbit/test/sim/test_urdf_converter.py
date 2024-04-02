@@ -7,7 +7,7 @@ from __future__ import annotations
 
 """Launch Isaac Sim Simulator first."""
 
-from omni.isaac.orbit.app import AppLauncher
+from omni.isaac.orbit.app import AppLauncher, run_tests
 
 # launch omniverse app
 config = {"headless": True}
@@ -18,15 +18,13 @@ simulation_app = AppLauncher(config).app
 import math
 import numpy as np
 import os
-import traceback
 import unittest
 
-import carb
 import omni.isaac.core.utils.prims as prim_utils
 import omni.isaac.core.utils.stage as stage_utils
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.simulation_context import SimulationContext
-from omni.isaac.core.utils.extensions import get_extension_path_from_name
+from omni.isaac.core.utils.extensions import enable_extension, get_extension_path_from_name
 
 from omni.isaac.orbit.sim.converters import UrdfConverter, UrdfConverterCfg
 
@@ -39,6 +37,7 @@ class TestUrdfConverter(unittest.TestCase):
         # Create a new stage
         stage_utils.create_new_stage()
         # retrieve path to urdf importer extension
+        enable_extension("omni.importer.urdf")
         extension_path = get_extension_path_from_name("omni.importer.urdf")
         # default configuration
         self.config = UrdfConverterCfg(
@@ -160,12 +159,4 @@ class TestUrdfConverter(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    try:
-        unittest.main()
-    except Exception as err:
-        carb.log_error(err)
-        carb.log_error(traceback.format_exc())
-        raise
-    finally:
-        # close sim app
-        simulation_app.close()
+    run_tests()

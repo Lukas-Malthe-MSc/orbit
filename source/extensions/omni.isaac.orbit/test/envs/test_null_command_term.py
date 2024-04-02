@@ -7,19 +7,16 @@ from __future__ import annotations
 
 """Launch Isaac Sim Simulator first."""
 
-from omni.isaac.orbit.app import AppLauncher
+from omni.isaac.orbit.app import AppLauncher, run_tests
 
 # launch omniverse app
-app_launcher = AppLauncher()
+app_launcher = AppLauncher(headless=True)
 simulation_app = app_launcher.app
 
 """Rest everything follows."""
 
-import traceback
 import unittest
 from collections import namedtuple
-
-import carb
 
 from omni.isaac.orbit.envs.mdp import NullCommandCfg
 
@@ -53,12 +50,4 @@ class TestNullCommandTerm(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    try:
-        unittest.main()
-    except Exception as err:
-        carb.log_error(err)
-        carb.log_error(traceback.format_exc())
-        raise
-    finally:
-        # close sim app
-        simulation_app.close()
+    run_tests()
