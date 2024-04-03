@@ -191,16 +191,16 @@ class RewardsCfg:
     # move_to_position = RewTerm(func=mdp.move_to_position, weight=-1.0, params={"target": (5.0, 4.0), "asset_cfg": SceneEntityCfg("robot")})
     
     # -- Penalty
-    # steering_angle_position = RewTerm(
-    #     func=mdp.joint_pos_target_l2,
-    #     weight=-0.05,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
-    # )
+    steering_angle_position = RewTerm(
+        func=mdp.joint_pos_target_l2,
+        weight=-0.05,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+    )
     
     # # -- Penalty
     min_lidar_distance = RewTerm(
         func=mdp.lidar_min_distance,
-        weight=-0.1,
+        weight=-0.01,
         params={"sensor_cfg": SceneEntityCfg("lidar")})
     
 @configclass
@@ -238,7 +238,7 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
     """Configuration for the locomotion velocity-tracking environment."""
 
     # Scene settings
-    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=12.0, replicate_physics=True)
+    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=15.0, replicate_physics=True)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
