@@ -77,16 +77,16 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         )
     )
     
-    race_track = AssetBaseCfg( 
-        prim_path="{ENV_REGEX_NS}/RaceTrack",
-        collision_group=-1,
-        spawn=sim_utils.UsdFileCfg(
-            # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-            usd_path="omniverse://localhost/Projects/f1tenth/maps/racetrack_square.usd",
-            # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
-            scale=(.01, .01, .01),
-        )
-    )
+    # race_track = AssetBaseCfg( 
+    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
+    #     collision_group=-1,
+    #     spawn=sim_utils.UsdFileCfg(
+    #         # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
+    #         usd_path="omniverse://localhost/Projects/f1tenth/maps/racetrack_square.usd",
+    #         # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
+    #         scale=(.01, .01, .01),
+    #     )
+    # )
 
     
     # TODO: Add touch sensor that can register collisions with the walls

@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 from omni.isaac.orbit.assets.articulation import Articulation
 from omni.isaac.orbit.managers.action_manager import ActionTerm
 
+from rich import print
+
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import BaseEnv
 
@@ -145,16 +147,18 @@ class AckermannAction(ActionTerm):
         delta_left = torch.atan(L / (R - W / 2))
         delta_right = torch.atan(L / (R + W / 2))
         
-        # Calculate target rotation for each wheel
-        target_rotation = target_velocity / wheel_radius
+        # Velocity adjustment based on wheel's distance from the IC
+        v_front_left = target_velocity * (R - W/2) / R
+        v_front_right = target_velocity * (R + W/2) / R
         
-        # TODO: Implement proper wheel speeds for each wheel. This code is inspired from the Ackermann OmniGraph node.
-        front_wheel_left_speed = target_rotation 
-        front_wheel_right_speed = target_rotation 
-        back_wheel_left_speed = target_rotation 
-        back_wheel_right_speed = target_rotation
+        # Assuming the rear wheels follow the path's radius adjusted for their position
+        R_rear_left = torch.sqrt((R - W/2)**2 + L**2)
+        R_rear_right = torch.sqrt((R + W/2)**2 + L**2)
         
-        # Assign calculated speeds to each wheel: [front_left, front_right, rear_left, rear_right]
-        wheel_speeds = torch.stack([front_wheel_left_speed, front_wheel_right_speed, back_wheel_left_speed, back_wheel_right_speed], dim=1)
+        v_back_left = target_velocity * R_rear_left / R
+        v_back_right = target_velocity * R_rear_right / R
+        
+        # Calculate target rotation for each wheel based on its velocity
+        wheel_speeds = torch.stack([v_front_left, v_front_right, v_back_left, v_back_right]) / wheel_radius
         
         return delta_left, delta_right, wheel_speeds
