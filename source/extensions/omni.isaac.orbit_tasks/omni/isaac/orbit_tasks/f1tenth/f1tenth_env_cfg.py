@@ -77,12 +77,13 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         )
     )
     
-    race_track = AssetBaseCfg(
+    race_track = AssetBaseCfg( 
         prim_path="{ENV_REGEX_NS}/RaceTrack",
         collision_group=-1,
         spawn=sim_utils.UsdFileCfg(
             # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-            usd_path="omniverse://localhost/Projects/f1tenth/racetrack_square.usd",
+            usd_path="omniverse://localhost/Projects/f1tenth/maps/racetrack_square.usd",
+            # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
             scale=(.01, .01, .01),
         )
     )
@@ -114,7 +115,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.24, base_length=0.33, wheel_radius=0.062, max_speed=2.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=100.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -179,7 +180,7 @@ class RewardsCfg:
     # (1) Constant running reward
     alive = RewTerm(func=mdp.is_alive, weight=0.5)
     # # (2) Failure penalty
-    # terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
+    terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
     
     # -- Task: Drive forward
     velocity = RewTerm(func=mdp.forward_velocity, weight=1.0)
@@ -197,7 +198,7 @@ class RewardsCfg:
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
     )
     
-    # # -- Penalty
+    # -- Penalty
     min_lidar_distance = RewTerm(
         func=mdp.lidar_min_distance,
         weight=-0.01,

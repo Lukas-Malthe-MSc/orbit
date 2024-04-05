@@ -52,11 +52,16 @@ simulation_app = app_launcher.app
 
 import gymnasium as gym
 import os
+import sys
 import torch
 import traceback
 from datetime import datetime
 
 import carb
+
+# sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "..")))
+# print(sys.path)
+
 from rsl_rl.runners import OnPolicyRunner
 
 from omni.isaac.orbit.envs import RLTaskEnvCfg
