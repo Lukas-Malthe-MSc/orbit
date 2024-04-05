@@ -5,7 +5,6 @@
 
 import math
 from omni.isaac.orbit.sensors.lidar.lidar_cfg import LidarCfg
-from omni.isaac.orbit.sim.spawners.sensors.sensors_cfg import LidarSensorCfg
 from rich import print
 
 import omni.isaac.orbit.sim as sim_utils
@@ -17,7 +16,6 @@ from omni.isaac.orbit.managers import RandomizationTermCfg as RandTerm
 from omni.isaac.orbit.managers import RewardTermCfg as RewTerm
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
-from omni.isaac.orbit.sensors import RayCasterCfg, patterns, CameraData, RayCaster
 from omni.isaac.orbit.scene import InteractiveSceneCfg
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
@@ -136,7 +134,7 @@ class ObservationsCfg:
         last_actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
-            self.enable_corruption = False
+            self.enable_corruption = True#False
             self.concatenate_terms = True
 
     # observation groups

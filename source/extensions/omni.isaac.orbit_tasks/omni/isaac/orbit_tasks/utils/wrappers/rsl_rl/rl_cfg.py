@@ -57,15 +57,6 @@ class RslRlActorCriticRecurrentCfg:
     rnn_num_layers: int = 1
     """The number of RNN layers."""
 
-    num_actor_obs: int = MISSING
-    """The number of actor observations."""
-
-    num_critic_obs: int = MISSING
-    """The number of critic observations."""
-
-    num_actions: int = MISSING
-    """The number of possible actions."""
-
 
 @configclass
 class RslRlPpoAlgorithmCfg:
@@ -130,7 +121,7 @@ class RslRlOnPolicyRunnerCfg:
     empirical_normalization: bool = MISSING
     """Whether to use empirical normalization."""
 
-    policy: RslRlPpoActorCriticCfg = MISSING
+    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg = MISSING
     """The policy configuration."""
 
     algorithm: RslRlPpoAlgorithmCfg = MISSING

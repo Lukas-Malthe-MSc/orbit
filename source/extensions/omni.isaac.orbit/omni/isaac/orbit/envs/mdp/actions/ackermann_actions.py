@@ -141,24 +141,25 @@ class AckermannAction(ActionTerm):
         target_velocity = target_velocity.float()
         
         # Calculating the turn radius from the steering angle
-        R = L / torch.tan(target_steering_angle_rad)
+        tan_steering = torch.tan(target_steering_angle_rad)
+        R = torch.where(tan_steering == 0, torch.full_like(tan_steering, 1e6), L / tan_steering)
         
         # Calculate the steering angles for the left and right front wheels in radians
         delta_left = torch.atan(L / (R - W / 2))
         delta_right = torch.atan(L / (R + W / 2))
         
-        # Velocity adjustment based on wheel's distance from the IC
-        v_front_left = target_velocity * (R - W/2) / R
-        v_front_right = target_velocity * (R + W/2) / R
-        
         # Assuming the rear wheels follow the path's radius adjusted for their position
         R_rear_left = torch.sqrt((R - W/2)**2 + L**2)
         R_rear_right = torch.sqrt((R + W/2)**2 + L**2)
+        
+        # Velocity adjustment based on wheel's distance from the IC
+        v_front_left = target_velocity * (R - W/2) / R
+        v_front_right = target_velocity * (R + W/2) / R
         
         v_back_left = target_velocity * R_rear_left / R
         v_back_right = target_velocity * R_rear_right / R
         
         # Calculate target rotation for each wheel based on its velocity
-        wheel_speeds = torch.stack([v_front_left, v_front_right, v_back_left, v_back_right]) / wheel_radius
+        wheel_speeds = torch.stack([v_front_left, v_front_right, v_back_left, v_back_right], dim=1) / wheel_radius
         
         return delta_left, delta_right, wheel_speeds
