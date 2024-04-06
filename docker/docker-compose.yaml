@@ -50,6 +50,24 @@ services:
       - type: volume
         source: isaac-docs
         target: ${DOCKER_USER_HOME}/Documents
+      - type: bind
+        source: ~/.ssh
+        target: /root/.ssh
+      - type: bind
+        source: ~/.gitconfig
+        target: /root/.gitconfig
+      - type: bind
+        source: ../source
+        target: /workspace/orbit/source
+      - type: bind
+        source: ../docs
+        target: /workspace/orbit/docs
+      - type: bind
+        source: ../.github
+        target: /workspace/orbit/.github
+      - type: bind
+        source: ../.git
+        target: /workspace/orbit/.git
         # These volumes allow X11 Forwarding
         # We currently comment these out because they can
         # cause bugs and warnings for people uninterested in
@@ -108,7 +126,9 @@ volumes:
   isaac-carb-logs:
   isaac-data:
   isaac-docs:
+
   # orbit
   orbit-docs:
   orbit-logs:
   orbit-data:
+
