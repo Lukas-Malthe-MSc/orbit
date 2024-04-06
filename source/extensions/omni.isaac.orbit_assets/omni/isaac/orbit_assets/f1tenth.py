@@ -11,12 +11,17 @@ import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.actuators import ImplicitActuatorCfg
 from omni.isaac.orbit.assets import ArticulationCfg
 from omni.isaac.orbit.utils.assets import ISAAC_ORBIT_NUCLEUS_DIR
+from pathlib import Path
 
-F1TNEHT_PROJET_DIR = "omniverse://localhost/Projects/f1tenth"
+current_working_directory = Path.cwd()
+
+
+# F1TNEHT_PROJET_DIR = "omniverse://localhost/Projects/f1tenth"
+F1TENTH_PROJECT_DIR = current_working_directory / "f1tenth_assets/omniverse"
 
 F1TENTH_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"{F1TNEHT_PROJET_DIR}/robot/instanceable/f1tenth.usd",
+        usd_path=f"{F1TENTH_PROJECT_DIR}/robot/instanceable/f1tenth.usd",
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.5)
