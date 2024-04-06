@@ -1,0 +1,3 @@
+[submodule "f1tenth_assets"]
+	path = f1tenth_assets
+	url = git@github.com:Lukas-Malthe-MSc/f1tenth_assets.git

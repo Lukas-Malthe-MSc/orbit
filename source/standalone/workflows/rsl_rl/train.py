@@ -44,6 +44,7 @@ simulation_app = app_launcher.app
 
 import gymnasium as gym
 import os
+import sys
 import torch
 from datetime import datetime
 
@@ -83,7 +84,9 @@ def main():
     log_dir = os.path.join(log_root_path, log_dir)
 
     # create isaac environment
-    env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
+    # env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
+    env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array")
+    
     # wrap for video recording
     if args_cli.video:
         video_kwargs = {
@@ -95,6 +98,7 @@ def main():
         print("[INFO] Recording videos during training.")
         print_dict(video_kwargs, nesting=4)
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
+        
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env)
 

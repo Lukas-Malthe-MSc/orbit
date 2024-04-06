@@ -14,13 +14,14 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
     RslRlOnPolicyRunnerCfg,
     RslRlPpoActorCriticCfg,
     RslRlPpoAlgorithmCfg,
+    RslRlActorCriticRecurrentCfg,
 )
 
 @configclass
 class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 5
-    save_interval = 5
+    max_iterations = 50
+    save_interval = 10
     experiment_name = "f1tenth"
     empirical_normalization = False
     policy = RslRlPpoActorCriticCfg(
@@ -29,6 +30,17 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         critic_hidden_dims=[512, 256, 128],
         activation="elu",
     )
+    # policy = RslRlActorCriticRecurrentCfg(
+    #     init_noise_std=1.0,
+    #     actor_hidden_dims=[512, 256, 128],
+    #     critic_hidden_dims=[512, 256, 128],
+    #     activation="elu",
+    #     rnn_type="lstm",
+    #     rnn_hidden_size=256,
+    #     rnn_num_layers=1,
+    # )
+        
+        
     algorithm = RslRlPpoAlgorithmCfg(
         value_loss_coef=1.0,
         use_clipped_value_loss=True,

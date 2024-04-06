@@ -173,7 +173,7 @@ class RLTaskEnv(BaseEnv, gym.Env):
             # update buffers at sim dt
             self.scene.update(dt=self.physics_dt)
         # perform rendering if gui is enabled
-        if self.sim.has_gui():
+        if self.sim.has_gui() or self.sim._offscreen_render:
             self.sim.render()
 
         # post-step:

@@ -5,7 +5,6 @@
 
 import math
 from omni.isaac.orbit.sensors.lidar.lidar_cfg import LidarCfg
-from omni.isaac.orbit.sim.spawners.sensors.sensors_cfg import LidarSensorCfg
 from rich import print
 
 import omni.isaac.orbit.sim as sim_utils
@@ -17,7 +16,6 @@ from omni.isaac.orbit.managers import RandomizationTermCfg as RandTerm
 from omni.isaac.orbit.managers import RewardTermCfg as RewTerm
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
-from omni.isaac.orbit.sensors import RayCasterCfg, patterns, CameraData, RayCaster
 from omni.isaac.orbit.scene import InteractiveSceneCfg
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
@@ -29,6 +27,10 @@ import omni.isaac.orbit_tasks.f1tenth.mdp as mdp
 ##
 from omni.isaac.orbit_assets.f1tenth import F1TENTH_CFG  # isort:skip
 
+
+from pathlib import Path
+
+current_working_directory = Path.cwd()
 
 ##
 # Scene definition
@@ -54,8 +56,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DistantLightCfg(color=(0.9, 0.9, 0.9), intensity=2500.0),
         init_state=AssetBaseCfg.InitialStateCfg(rot=(0.738, 0.477, 0.477, 0.0)),
     )
-    
-    
+
     # f1tenth
     robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
 
@@ -77,12 +78,13 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         )
     )
     
-    race_track = AssetBaseCfg(
+    race_track = AssetBaseCfg( 
         prim_path="{ENV_REGEX_NS}/RaceTrack",
         collision_group=-1,
         spawn=sim_utils.UsdFileCfg(
             # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-            usd_path="omniverse://localhost/Projects/f1tenth/racetrack_square.usd",
+            usd_path="current_working_directory/f1tenth_assets/racetrack_square.usd",
+            # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
             scale=(.01, .01, .01),
         )
     )
@@ -114,7 +116,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.24, base_length=0.33, wheel_radius=0.062, max_speed=2.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=100.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -135,7 +137,7 @@ class ObservationsCfg:
         last_actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
-            self.enable_corruption = False
+            self.enable_corruption = True#False
             self.concatenate_terms = True
 
     # observation groups
@@ -179,7 +181,7 @@ class RewardsCfg:
     # (1) Constant running reward
     alive = RewTerm(func=mdp.is_alive, weight=0.5)
     # # (2) Failure penalty
-    # terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
+    terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
     
     # -- Task: Drive forward
     velocity = RewTerm(func=mdp.forward_velocity, weight=1.0)
@@ -191,16 +193,16 @@ class RewardsCfg:
     # move_to_position = RewTerm(func=mdp.move_to_position, weight=-1.0, params={"target": (5.0, 4.0), "asset_cfg": SceneEntityCfg("robot")})
     
     # -- Penalty
-    # steering_angle_position = RewTerm(
-    #     func=mdp.joint_pos_target_l2,
-    #     weight=-0.05,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
-    # )
+    steering_angle_position = RewTerm(
+        func=mdp.joint_pos_target_l2,
+        weight=-0.05,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+    )
     
-    # # -- Penalty
+    # -- Penalty
     min_lidar_distance = RewTerm(
         func=mdp.lidar_min_distance,
-        weight=-0.1,
+        weight=-0.01,
         params={"sensor_cfg": SceneEntityCfg("lidar")})
     
 @configclass
@@ -238,7 +240,7 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
     """Configuration for the locomotion velocity-tracking environment."""
 
     # Scene settings
-    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=12.0, replicate_physics=True)
+    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=15.0, replicate_physics=True)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

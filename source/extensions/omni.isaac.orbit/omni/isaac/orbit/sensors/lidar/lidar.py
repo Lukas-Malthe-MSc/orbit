@@ -5,13 +5,12 @@
 
 from __future__ import annotations
 
-import math
 import numpy as np
 import re
 import torch
 from collections.abc import Sequence
-from tensordict import TensorDict
-from typing import TYPE_CHECKING, Any, Literal
+
+from typing import TYPE_CHECKING, Literal
 from rich import print
 
 import omni.kit.commands
@@ -23,10 +22,6 @@ import omni.isaac.RangeSensorSchema as RangeSensorSchema
 # enable_extension("omni.isaac.range_sensor")  # required by OIGE
 from omni.isaac.range_sensor import _range_sensor
 
-from pxr import UsdGeom
-
-import omni.isaac.orbit.sim as sim_utils
-from omni.isaac.orbit.utils import to_camel_case
 from omni.isaac.orbit.utils.array import convert_to_torch
 from omni.isaac.orbit.utils.math import quat_from_matrix
 

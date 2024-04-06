@@ -78,10 +78,7 @@ x-default-orbit-deploy:
             capabilities: [ gpu ]
 
 services:
-  # This service is the base Orbit image
-  orbit-base:
-    profiles: ["base"]
-    env_file: .env.base
+  orbit:
     build:
       context: ../
       dockerfile: docker/Dockerfile.base
@@ -89,65 +86,87 @@ services:
         - ISAACSIM_VERSION=${ISAACSIM_VERSION}
         - ISAACSIM_PATH=${DOCKER_ISAACSIM_PATH}
         - DOCKER_USER_HOME=${DOCKER_USER_HOME}
-    image: orbit-base
-    container_name: orbit-base
-    environment:
-      # We set DOCKER_ISAACSIM_PATH and then forward it to ISAACSIM_PATH within
-      # the container to avoid collision with pre-existing ISAACSIM_PATH env vars
-      # that could come from installing Orbit on the local machine, causing build errors.
-      # We can't just define this in the .env file because shell envars take precedence
-      # https://docs.docker.com/compose/environment-variables/envvars-precedence/
-      - ISAACSIM_PATH=${DOCKER_ISAACSIM_PATH}
-      # This should also be enabled for X11 forwarding
-      # - DISPLAY=${DISPLAY}
-    volumes: *default-orbit-volumes
-    network_mode: host
-    deploy: *default-orbit-deploy
-    # This is the entrypoint for the container
-    entrypoint: bash
-    stdin_open: true
-    tty: true
-
-  # This service adds a ROS2 Humble
-  # installation on top of the base image
-  orbit-ros2:
-    profiles: ["ros2"]
+    image: orbit
+    container_name: orbit
     env_file:
-      - .env.base
-      - .env.ros2
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.ros2
-      args:
-          # ROS2_APT_PACKAGE will default to NONE. This is to
-          # avoid a warning message when building only the base profile
-          # with the .env.base file
-        - ROS2_APT_PACKAGE=${ROS2_APT_PACKAGE:-NONE}
-        - DOCKER_USER_HOME=${DOCKER_USER_HOME}
-    image: orbit-ros2
-    container_name: orbit-ros2
+      - .env
     environment:
       - ISAACSIM_PATH=${DOCKER_ISAACSIM_PATH}
-    volumes: *default-orbit-volumes
+    volumes:
+      - type: bind
+        source: ~/.ssh
+        target: /root/.ssh
+      - type: bind
+        source: ~/.gitconfig
+        target: /root/.gitconfig
+      - type: bind
+        source: ../
+        target: /workspace/orbit
+      - type: volume
+        source: isaac-cache-kit
+        target: ${DOCKER_ISAACSIM_PATH}/kit/cache
+      - type: volume
+        source: isaac-cache-ov
+        target: ${DOCKER_USER_HOME}/.cache/ov
+      - type: volume
+        source: isaac-cache-pip
+        target: ${DOCKER_USER_HOME}/.cache/pip
+      - type: volume
+        source: isaac-cache-gl
+        target: ${DOCKER_USER_HOME}/.cache/nvidia/GLCache
+      - type: volume
+        source: isaac-cache-compute
+        target: ${DOCKER_USER_HOME}/.nv/ComputeCache
+      - type: volume
+        source: isaac-logs
+        target: ${DOCKER_USER_HOME}/.nvidia-omniverse/logs
+      - type: volume
+        source: isaac-carb-logs
+        target: ${DOCKER_ISAACSIM_PATH}/kit/logs/Kit/Isaac-Sim
+      - type: volume
+        source: isaac-data
+        target: ${DOCKER_USER_HOME}/.local/share/ov/data
+      - type: volume
+        source: isaac-docs
+        target: ${DOCKER_USER_HOME}/Documents
+      # Optional X11 Forwarding volumes commented out
+      #- type: bind
+      #  source: /tmp/.X11-unix
+      #  target: /tmp/.X11-unix
+      #- type: bind
+      #  source: ${HOME}/.Xauthority
+      #  target: ${DOCKER_USER_HOME}/.Xauthority
+      - type: volume
+        source: orbit-docs
+        target: /workspace/orbit/docs/_build
+      - type: volume
+        source: orbit-logs
+        target: /workspace/orbit/logs
+      - type: volume
+        source: orbit-data
+        target: /workspace/orbit/data_storage
     network_mode: host
-    deploy: *default-orbit-deploy
-    # This is the entrypoint for the container
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     entrypoint: bash
     stdin_open: true
     tty: true
 
 volumes:
-  # isaac-sim
-  isaac-cache-kit:
-  isaac-cache-ov:
-  isaac-cache-pip:
-  isaac-cache-gl:
-  isaac-cache-compute:
-  isaac-logs:
-  isaac-carb-logs:
-  isaac-data:
-  isaac-docs:
-  # orbit
-  orbit-docs:
-  orbit-logs:
-  orbit-data:
+  isaac-cache-kit: {}
+  isaac-cache-ov: {}
+  isaac-cache-pip: {}
+  isaac-cache-gl: {}
+  isaac-cache-compute: {}
+  isaac-logs: {}
+  isaac-carb-logs: {}
+  isaac-data: {}
+  isaac-docs: {}
+  orbit-docs: {}
+  orbit-logs: {}
+  orbit-data: {}
