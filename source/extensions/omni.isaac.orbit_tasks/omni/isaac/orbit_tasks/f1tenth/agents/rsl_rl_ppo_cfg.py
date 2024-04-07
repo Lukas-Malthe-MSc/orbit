@@ -24,6 +24,7 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     save_interval = 10
     experiment_name = "f1tenth"
     empirical_normalization = False
+    device = "cuda:0"
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
         actor_hidden_dims=[512, 256, 128],

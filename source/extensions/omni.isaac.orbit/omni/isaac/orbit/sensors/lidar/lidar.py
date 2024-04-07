@@ -17,9 +17,9 @@ import omni.kit.commands
 import omni.usd
 from omni.isaac.core.prims import XFormPrimView
 
-from omni.isaac.core.utils.extensions import enable_extension
+# from omni.isaac.core.utils.extensions import enable_extension
 
-enable_extension("omni.isaac.range_sensor")  # required by OIGE
+# enable_extension("omni.isaac.range_sensor")  # required by OIGE
 # enable_extension("omni.isaac.RangeSensorSchema")  # required by OIGE
 from omni.isaac.range_sensor import _range_sensor
 import omni.isaac.RangeSensorSchema as RangeSensorSchema
