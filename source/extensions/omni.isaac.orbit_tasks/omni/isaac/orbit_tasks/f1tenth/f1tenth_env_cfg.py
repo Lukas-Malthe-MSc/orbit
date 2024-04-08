@@ -37,8 +37,12 @@ from pathlib import Path
 current_working_directory = Path.cwd()
 
 """
-Run commmand:
+Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
+
+Play command:
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-05_12-34-44 --checkpoint model_49.pt
+
 """
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
