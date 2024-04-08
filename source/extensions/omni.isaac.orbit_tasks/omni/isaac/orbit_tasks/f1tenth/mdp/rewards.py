@@ -8,6 +8,8 @@ from __future__ import annotations
 import torch
 from typing import TYPE_CHECKING
 
+from rich import print
+
 from omni.isaac.orbit.assets import Articulation
 from omni.isaac.orbit.assets import RigidObject
 from omni.isaac.orbit.managers import SceneEntityCfg
@@ -34,7 +36,6 @@ def forward_velocity(
     """Root linear velocity in the asset's root frame."""
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
-
     return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
     # print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
     # return asset.data.root_lin_vel_b[:, 0]
@@ -76,6 +77,8 @@ def passed_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshol
     """Checks if assets have passed their starting locations within some threshold."""
     # Access the asset
     asset: Articulation = env.scene[asset_cfg.name]
+    
+    print(f"passed_starting_location: {asset.data.root_pos_w[:, :2]}")
 
     # Check if we've already captured the starting positions for this asset
     if asset_cfg.name not in env.starting_positions:
@@ -93,7 +96,7 @@ def passed_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshol
     
     # Check if the assets have moved beyond the threshold from their starting positions
     passed_threshold = distance_moved > threshold
-    
+    print(f"passed_starting_location: {passed_threshold}")
     return passed_threshold
     
 

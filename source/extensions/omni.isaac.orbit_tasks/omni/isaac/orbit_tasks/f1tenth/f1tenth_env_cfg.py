@@ -130,7 +130,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=6.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=2.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -199,6 +199,10 @@ class RewardsCfg:
     
     # -- Task: Drive forward
     velocity = RewTerm(func=mdp.forward_velocity, weight=1.0)
+    
+    # passed_starting_location = RewTerm(func=mdp.passed_starting_location, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
+    
+    # update_pass_counters = RewTerm(func=mdp.update_pass_counters, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
     
     # -- Task: Move to center of track
     # lidar_deviation = RewTerm(func=mdp.lidar_mean_absolute_deviation, weight=-1.0, params={"sensor_cfg": SceneEntityCfg("lidar")})
@@ -271,7 +275,7 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 10
+        self.episode_length_s = 60
         # viewer settings
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings
