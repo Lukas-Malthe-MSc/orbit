@@ -61,6 +61,12 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     )
     
     
+    target = AssetBaseCfg(
+        prim_path="/World/target",
+        spawn=sim_utils.SphereCfg(radius=0.1),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(5.0, 4.0, 0.0),rot=(0.0, 0.0, 0.0, 0.0)),
+    )
+    
     # f1tenth
     robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
 
@@ -136,12 +142,12 @@ class ObservationsCfg:
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         
-        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
+        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, noise=Unoise(n_min=-0.1, n_max=0.1), params={"sensor_cfg": SceneEntityCfg("lidar")})
         
         last_actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
-            self.enable_corruption = False
+            self.enable_corruption = True
             self.concatenate_terms = True
 
     # observation groups

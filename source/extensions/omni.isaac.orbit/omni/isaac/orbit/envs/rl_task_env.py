@@ -85,6 +85,10 @@ class RLTaskEnv(BaseEnv, gym.Env):
         super().__init__(cfg=cfg)
         # store the render mode
         self.render_mode = render_mode
+        
+        # initialize the starting positions and pass counters
+        self.starting_positions = {}
+        self.pass_counters = {}
 
         # initialize data and constants
         # -- counter for curriculum
