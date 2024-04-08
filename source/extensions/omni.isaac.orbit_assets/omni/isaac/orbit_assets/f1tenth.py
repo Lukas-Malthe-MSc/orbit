@@ -31,15 +31,15 @@ F1TENTH_CFG = ArticulationCfg(
             joint_names_expr=['wheel_.*'],
             effort_limit=None, #50,
             velocity_limit=None, #25,
-            stiffness=0, #1000,
-            damping=175
+            stiffness=None, #1000,
+            damping=None#175
         ),
         "rotators": ImplicitActuatorCfg(
             joint_names_expr=["rotator_.*"],
             effort_limit=None,
             velocity_limit=None,
-            stiffness=0,
-            damping=175
+            stiffness=None, # 0,
+            damping=None, #175
         ),
     },
 )
