@@ -32,7 +32,14 @@ from omni.isaac.orbit_assets.f1tenth import F1TENTH_CFG  # isort:skip
 # Scene definition
 ##
 
+from pathlib import Path
 
+current_working_directory = Path.cwd()
+
+"""
+Run commmand:
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
+"""
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
     """Configuration for a cart-pole scene."""
@@ -75,16 +82,16 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         )
     )
     
-    # race_track = AssetBaseCfg( 
-    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
-    #     collision_group=-1,
-    #     spawn=sim_utils.UsdFileCfg(
-    #         # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-    #         usd_path="omniverse://localhost/Projects/f1tenth/maps/racetrack_square.usd",
-    #         # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
-    #         scale=(.01, .01, .01),
-    #     )
-    # )
+    race_track = AssetBaseCfg( 
+        prim_path="{ENV_REGEX_NS}/RaceTrack",
+        collision_group=-1,
+        spawn=sim_utils.UsdFileCfg(
+            # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
+            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/racetrack_square.usd",
+            # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
+            scale=(.01, .01, .01),
+        )
+    )
 
     
     # TODO: Add touch sensor that can register collisions with the walls
@@ -113,7 +120,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=100.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=6.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -134,7 +141,7 @@ class ObservationsCfg:
         last_actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
-            self.enable_corruption = True#False
+            self.enable_corruption = False
             self.concatenate_terms = True
 
     # observation groups

@@ -35,9 +35,9 @@ def forward_velocity(
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
 
-    # return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
-    print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
-    return asset.data.root_lin_vel_b[:, 0]
+    return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
+    # print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
+    # return asset.data.root_lin_vel_b[:, 0]
 
 def lidar_distance_sum(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Terminate when the asset's joint velocities are outside of the soft joint limits."""

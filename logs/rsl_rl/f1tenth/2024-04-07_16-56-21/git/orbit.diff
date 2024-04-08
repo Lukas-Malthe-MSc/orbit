@@ -1,0 +1,81 @@
+--- git status ---
+On branch f1tenth-environment
+Your branch is up to date with 'origin/f1tenth-environment'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	logs/rsl_rl/f1tenth/2024-04-07_16-56-21/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+index 8ff5ef7..f6fa0a9 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+@@ -32,7 +32,14 @@ from omni.isaac.orbit_assets.f1tenth import F1TENTH_CFG  # isort:skip
+ # Scene definition
+ ##
+ 
++from pathlib import Path
+ 
++current_working_directory = Path.cwd()
++
++"""
++Run commmand:
++$ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
++"""
+ @configclass
+ class F1tenthSceneCfg(InteractiveSceneCfg):
+     """Configuration for a cart-pole scene."""
+@@ -75,16 +82,16 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
+         )
+     )
+     
+-    # race_track = AssetBaseCfg( 
+-    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
+-    #     collision_group=-1,
+-    #     spawn=sim_utils.UsdFileCfg(
+-    #         # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
+-    #         usd_path="omniverse://localhost/Projects/f1tenth/maps/racetrack_square.usd",
+-    #         # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
+-    #         scale=(.01, .01, .01),
+-    #     )
+-    # )
++    race_track = AssetBaseCfg( 
++        prim_path="{ENV_REGEX_NS}/RaceTrack",
++        collision_group=-1,
++        spawn=sim_utils.UsdFileCfg(
++            # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
++            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/racetrack_square.usd",
++            # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
++            scale=(.01, .01, .01),
++        )
++    )
+ 
+     
+     # TODO: Add touch sensor that can register collisions with the walls
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py
+index 37e8a84..92d5212 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py
+@@ -35,9 +35,9 @@ def forward_velocity(
+     # extract the used quantities (to enable type-hinting)
+     asset: RigidObject = env.scene[asset_cfg.name]
+ 
+-    # return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
+-    print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
+-    return asset.data.root_lin_vel_b[:, 0]
++    return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
++    # print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
++    # return asset.data.root_lin_vel_b[:, 0]
+ 
+ def lidar_distance_sum(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+     """Terminate when the asset's joint velocities are outside of the soft joint limits."""

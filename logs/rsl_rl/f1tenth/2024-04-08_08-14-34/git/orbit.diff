@@ -1,0 +1,101 @@
+--- git status ---
+On branch f1tenth-environment
+Your branch is up to date with 'origin/f1tenth-environment'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	logs/rsl_rl/f1tenth/2024-04-07_16-56-21/
+	logs/rsl_rl/f1tenth/2024-04-07_17-08-53/
+	logs/rsl_rl/f1tenth/2024-04-08_08-14-34/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+index 8ff5ef7..2f0166f 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+@@ -32,7 +32,14 @@ from omni.isaac.orbit_assets.f1tenth import F1TENTH_CFG  # isort:skip
+ # Scene definition
+ ##
+ 
++from pathlib import Path
+ 
++current_working_directory = Path.cwd()
++
++"""
++Run commmand:
++$ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
++"""
+ @configclass
+ class F1tenthSceneCfg(InteractiveSceneCfg):
+     """Configuration for a cart-pole scene."""
+@@ -75,16 +82,16 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
+         )
+     )
+     
+-    # race_track = AssetBaseCfg( 
+-    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
+-    #     collision_group=-1,
+-    #     spawn=sim_utils.UsdFileCfg(
+-    #         # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
+-    #         usd_path="omniverse://localhost/Projects/f1tenth/maps/racetrack_square.usd",
+-    #         # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
+-    #         scale=(.01, .01, .01),
+-    #     )
+-    # )
++    race_track = AssetBaseCfg( 
++        prim_path="{ENV_REGEX_NS}/RaceTrack",
++        collision_group=-1,
++        spawn=sim_utils.UsdFileCfg(
++            # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
++            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/racetrack_square.usd",
++            # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
++            scale=(.01, .01, .01),
++        )
++    )
+ 
+     
+     # TODO: Add touch sensor that can register collisions with the walls
+@@ -113,7 +120,7 @@ class ActionsCfg:
+     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
+                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
+                                   steering_joint_names=["rotator_left", "rotator_right"], 
+-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=100.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
++                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=6.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+ 
+ @configclass
+ class ObservationsCfg:
+@@ -134,7 +141,7 @@ class ObservationsCfg:
+         last_actions = ObsTerm(func=mdp.last_action)
+ 
+         def __post_init__(self) -> None:
+-            self.enable_corruption = True#False
++            self.enable_corruption = False
+             self.concatenate_terms = True
+ 
+     # observation groups
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py
+index 37e8a84..92d5212 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/rewards.py
+@@ -35,9 +35,9 @@ def forward_velocity(
+     # extract the used quantities (to enable type-hinting)
+     asset: RigidObject = env.scene[asset_cfg.name]
+ 
+-    # return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
+-    print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
+-    return asset.data.root_lin_vel_b[:, 0]
++    return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
++    # print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
++    # return asset.data.root_lin_vel_b[:, 0]
+ 
+ def lidar_distance_sum(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+     """Terminate when the asset's joint velocities are outside of the soft joint limits."""
