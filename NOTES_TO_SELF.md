@@ -1,38 +1,62 @@
-# Notes to Self
+# Container Setup Instructions
 
-## Working with Submodules in Git
+This document outlines the necessary steps to set up your environment within the container, including creating a symbolic link, adding a dependency to a configuration file, and ensuring `ssh` is available for Git operations.
 
-### Initializing Submodules
+## Creating a Symbolic Link
 
-After cloning a repository with submodules, you need to initialize and update the submodules. Here's how to do it sequentially:
+To create a symbolic link inside the container, follow these steps. This link will point to the Isaac Sim installation directory, simplifying access to it from a common workspace directory.
 
-1. **Initialize Your Submodules**: This sets up your local configuration file.
+1. Navigate to your workspace directory:
+
     ```bash
-    git submodule init
+    cd /workspace/orbit
     ```
 
-2. **Fetch All Data for the Submodules**:
+2. Create a symbolic link named `_isaac_sim` that points to the `/isaac-sim/` directory:
+
     ```bash
-    git submodule update
+    ln -s /isaac-sim/ _isaac_sim
     ```
 
-    Or, to initialize and update in one command:
+By doing this, you can easily refer to the Isaac Sim directory using the `_isaac_sim` shortcut from your workspace.
+
+## Adding a Dependency
+
+To add a new dependency to the Isaac Sim environment, you'll need to modify a configuration file. Specifically, we'll be adding the "omni.isaac.range_sensor" extension.
+
+1. Ensure the configuration file exists by touching the file (this command will create the file if it doesn't exist, but won't modify it if it does):
+
     ```bash
-    git submodule update --init
+    touch /isaac-sim/apps/omni.isaac.sim.python.gym.headless.kit
     ```
 
-    For submodules within submodules:
+2. Add the following dependency to the bottom of the file. This step might require using a text editor to open and edit the file:
+
     ```bash
-    git submodule update --init --recursive
+    "omni.isaac.range_sensor" = {}
     ```
 
-## Changing Read/Write Permissions
+This line registers the `omni.isaac.range_sensor` extension with the Isaac Sim environment, making it available for use in your simulations.
 
-### For the Orbit Directory:
+## Ensuring SSH Availability for Git Operations
 
-From the host system, navigate to the directory containing the Orbit project and adjust permissions as necessary. A more secure setting that allows read, write, and execute for the owner, and read and execute for others is:
+If you're planning to use Git within the container, it's important to ensure that the SSH client is available, especially for operations that require authentication such as pushing to a repository. Here's how to install `openssh-client`:
 
-```bash
-chmod 755 -R orbit
-chmod 700 ~/.ssh
-```
+1. Update the package lists for upgrades and new package installations:
+
+    ```bash
+    apt-get update
+    ```
+
+2. Install the `openssh-client` package:
+
+    ```bash
+    apt-get install openssh-client
+    ```
+
+This step ensures that the `ssh` command is available in your container, facilitating secure connections to remote servers and services.
+
+### Note:
+
+- These instructions assume you have the necessary permissions within the container to install new packages. You may need to prepend `sudo` to the commands if you're not operating as the root user.
+- Be sure to verify the path to the Isaac Sim directory and the location of the configuration file, as these may vary based on your specific installation and version of Isaac Sim.

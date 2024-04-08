@@ -16,12 +16,13 @@ from rich import print
 import omni.kit.commands
 import omni.usd
 from omni.isaac.core.prims import XFormPrimView
-import omni.isaac.RangeSensorSchema as RangeSensorSchema
+
 # from omni.isaac.core.utils.extensions import enable_extension
 
 # enable_extension("omni.isaac.range_sensor")  # required by OIGE
+# enable_extension("omni.isaac.RangeSensorSchema")  # required by OIGE
 from omni.isaac.range_sensor import _range_sensor
-
+import omni.isaac.RangeSensorSchema as RangeSensorSchema
 from omni.isaac.orbit.utils.array import convert_to_torch
 from omni.isaac.orbit.utils.math import quat_from_matrix
 

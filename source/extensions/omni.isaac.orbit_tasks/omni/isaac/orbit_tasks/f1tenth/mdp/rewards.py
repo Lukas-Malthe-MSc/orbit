@@ -35,9 +35,9 @@ def forward_velocity(
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
 
-    # return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
-    print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
-    return asset.data.root_lin_vel_b[:, 0]
+    return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
+    # print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
+    # return asset.data.root_lin_vel_b[:, 0]
 
 def lidar_distance_sum(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Terminate when the asset's joint velocities are outside of the soft joint limits."""
@@ -71,3 +71,60 @@ def move_to_position(env: RLTaskEnv, target: torch.Tensor, asset_cfg: SceneEntit
     asset: Articulation = env.scene[asset_cfg.name]
     # compute the reward
     return torch.sqrt(torch.sum(torch.square(asset.data.root_pos_w[:, :2] - target), dim=1))
+
+def passed_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
+    """Checks if assets have passed their starting locations within some threshold."""
+    # Access the asset
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    # Check if we've already captured the starting positions for this asset
+    if asset_cfg.name not in env.starting_positions:
+        # Capture and store the starting positions
+        env.starting_positions[asset_cfg.name] = asset.data.root_pos_w[:, :2].clone()
+
+    # Retrieve the starting positions
+    starting_positions = env.starting_positions[asset_cfg.name]
+    
+    # Compute the difference in positions
+    position_differences = asset.data.root_pos_w[:, :2] - starting_positions
+    
+    # Calculate the distance moved from the starting positions
+    distance_moved = torch.norm(position_differences, dim=1)
+    
+    # Check if the assets have moved beyond the threshold from their starting positions
+    passed_threshold = distance_moved > threshold
+    
+    return passed_threshold
+    
+
+def update_pass_counters(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
+    """Updates counters for each asset based on whether they've passed their starting location."""
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    # Ensure we have starting positions
+    if asset_cfg.name not in env.starting_positions:
+        env.starting_positions[asset_cfg.name] = asset.data.root_pos_w[:, :2].clone()
+        env.pass_counters[asset_cfg.name] = torch.zeros(asset.data.root_pos_w.shape[0], dtype=torch.int64, device=asset.device)
+
+    # Retrieve starting positions and pass counters
+    starting_positions = env.starting_positions[asset_cfg.name]
+    pass_counters = env.pass_counters[asset_cfg.name]
+
+    # Compute the difference in positions from the starting point
+    position_differences = asset.data.root_pos_w[:, :2] - starting_positions
+    
+    # Calculate the distance moved from the starting positions
+    distance_moved = torch.norm(position_differences, dim=1)
+    
+    # Identify assets that have moved beyond the threshold
+    passed_threshold = distance_moved > threshold
+
+    # Update the pass counters for assets that have passed the threshold
+    # This simplistic approach increments the counter every time the asset is beyond the threshold
+    # A more sophisticated approach might track entering and exiting the threshold region
+    pass_counters += passed_threshold.int()
+
+    # Save the updated pass counters back to the dictionary
+    env.pass_counters[asset_cfg.name] = pass_counters
+
+    return pass_counters

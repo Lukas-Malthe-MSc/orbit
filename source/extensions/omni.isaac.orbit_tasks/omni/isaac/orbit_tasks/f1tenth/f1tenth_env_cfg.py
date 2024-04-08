@@ -36,7 +36,18 @@ current_working_directory = Path.cwd()
 # Scene definition
 ##
 
+from pathlib import Path
 
+current_working_directory = Path.cwd()
+
+"""
+Train commmand:
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
+
+Play command:
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-05_12-34-44 --checkpoint model_49.pt
+
+"""
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
     """Configuration for a cart-pole scene."""
@@ -56,7 +67,14 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DistantLightCfg(color=(0.9, 0.9, 0.9), intensity=2500.0),
         init_state=AssetBaseCfg.InitialStateCfg(rot=(0.738, 0.477, 0.477, 0.0)),
     )
-
+    
+    
+    target = AssetBaseCfg(
+        prim_path="/World/target",
+        spawn=sim_utils.SphereCfg(radius=0.1),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(5.0, 4.0, 0.0),rot=(0.0, 0.0, 0.0, 0.0)),
+    )
+    
     # f1tenth
     robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
 
@@ -83,7 +101,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         collision_group=-1,
         spawn=sim_utils.UsdFileCfg(
             # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-            usd_path="current_working_directory/f1tenth_assets/racetrack_square.usd",
+            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/racetrack_square.usd",
             # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
             scale=(.01, .01, .01),
         )
@@ -116,7 +134,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=100.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=6.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -132,12 +150,12 @@ class ObservationsCfg:
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         
-        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, params={"sensor_cfg": SceneEntityCfg("lidar")})
+        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, noise=Unoise(n_min=-0.1, n_max=0.1), params={"sensor_cfg": SceneEntityCfg("lidar")})
         
         last_actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
-            self.enable_corruption = True#False
+            self.enable_corruption = True
             self.concatenate_terms = True
 
     # observation groups
