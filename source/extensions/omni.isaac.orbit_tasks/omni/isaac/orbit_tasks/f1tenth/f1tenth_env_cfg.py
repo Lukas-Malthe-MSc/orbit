@@ -130,7 +130,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=2.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=4.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
