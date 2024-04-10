@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import math
+import torch
 from omni.isaac.orbit.sensors.lidar.lidar_cfg import LidarCfg
 from rich import print
 
@@ -42,7 +43,7 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-10_11-27-17 --checkpoint model_49.pt
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-10_14-10-22 --checkpoint model_49.pt
 
 """
 @configclass
@@ -73,12 +74,12 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     #     init_state=AssetBaseCfg.InitialStateCfg(pos=(5.0, 4.0, 0.0),rot=(0.0, 0.0, 0.0, 0.0)),
     # )
 
-    # target = AssetBaseCfg(
+    # obstacle = [AssetBaseCfg(
     #     prim_path="{ENV_REGEX_NS}/target",
     #     spawn=sim_utils.CuboidCfg(size=(0.1, 2.0, 0.1)),
     #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0),
     #                                             rot=(0.0, 0.0, 0.0, 0.0)),
-    # )
+    # )for i in range(4)]
     
     
     # f1tenth
@@ -142,7 +143,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=2.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=2.0, max_steering_angle=math.pi/4, scale=(2.0, torch.pi), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -214,14 +215,7 @@ class RewardsCfg:
     # -- Task: Drive forward
     velocity = RewTerm(func=mdp.forward_velocity, weight=1.0)
     
-    # passed_starting_location = RewTerm(func=mdp.passed_starting_location, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
-    # passed_starting_lcation = RewTerm(func=mdp.touch_target, 
-    #                                   weight=1.0, 
-    #                                   params={"asset_cfg": SceneEntityCfg("robot"), 
-    #                                           "target_cfg": SceneEntityCfg("target"),
-    #                                             "threshold": 0.5
-    #                                           } 
-    #                                   )
+    # within_starting_location = RewTerm(func=mdp.within_starting_location, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
     
     # update_pass_counters = RewTerm(func=mdp.update_pass_counters, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
     
@@ -260,6 +254,7 @@ class TerminationsCfg:
     #     func=mdp.lidar_distance_limit,
     #     params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.35},
     # )
+    
     
 
 

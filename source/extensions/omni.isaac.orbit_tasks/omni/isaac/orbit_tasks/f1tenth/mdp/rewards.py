@@ -76,26 +76,30 @@ def passed_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshol
     """Checks if assets have passed their starting locations within some threshold."""
     # Access the asset
     asset: Articulation = env.scene[asset_cfg.name]
-    
-    print(f"passed_starting_location: {asset.data.root_pos_w[:, :2]}")
 
     # Check if we've already captured the starting positions for this asset
     if asset_cfg.name not in env.starting_positions:
         # Capture and store the starting positions
         env.starting_positions[asset_cfg.name] = asset.data.root_pos_w[:, :2].clone()
 
+    if env.common_step_counter < 100:
+        return torch.zeros(asset.data.root_pos_w.shape[0], dtype=torch.bool, device=asset.device)
     # Retrieve the starting positions
     starting_positions = env.starting_positions[asset_cfg.name]
     
+    print(f"starting_positions: {starting_positions}")
+    
     # Compute the difference in positions
     position_differences = asset.data.root_pos_w[:, :2] - starting_positions
+    
+    print(f"position_differences: {position_differences}")
     
     # Calculate the distance moved from the starting positions
     distance_moved = torch.norm(position_differences, dim=1)
     
     # Check if the assets have moved beyond the threshold from their starting positions
     passed_threshold = distance_moved > threshold
-    print(f"passed_starting_location: {passed_threshold}")
+    # print(f"passed_starting_location: {passed_threshold}")
     return passed_threshold
     
 
@@ -132,19 +136,31 @@ def update_pass_counters(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: f
     return pass_counters
 
 
-# Reward for touching target
-def touch_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg, target_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
-    """Reward for touching the target."""
+def within_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
+    """Checks if assets are within their starting locations +- a threshold."""
+    # Access the asset
     asset: Articulation = env.scene[asset_cfg.name]
-    target: Articulation = env.scene[target_cfg.name]
+
+    # Check if we've already captured the starting positions for this asset
+    if asset_cfg.name not in env.starting_positions or any(env.termination_manager.time_outs):
+        # Capture and store the starting positions
+        env.starting_positions[asset_cfg.name] = asset.data.root_pos_w[:, :2].clone()
+        print(f"starting_positions: {env.starting_positions[asset_cfg.name]}")
+
+    # If it's too early in the simulation, assume we're within the starting location
+    if env.common_step_counter < 100:
+        return torch.zeros(asset.data.root_pos_w.shape[0], dtype=torch.bool, device=asset.device)
     
-    print(f"target_contact: {target.cfg.collision_group}")
-    
-    # Check if there is collision between the asset and the target
-    collision_threshold = asset.data.root_pos_w[:, :2]
-    
-    if collision_threshold:
-        print("THROAT GOAT")
-        return torch.tensor([1.0], device=asset.device)
-    else:
-        return torch.tensor([0.0], device=asset.device)
+    # Retrieve the starting positions
+    starting_positions = env.starting_positions[asset_cfg.name]
+
+    # Compute the difference in positions
+    position_differences = asset.data.root_pos_w[:, :2] - starting_positions
+
+    # Calculate the distance moved from the starting positions
+    distance_moved = torch.norm(position_differences, dim=1)
+
+    # Check if the assets are within the threshold of their starting positions
+    within_threshold = distance_moved <= threshold
+    # print(f"within_starting_location: {within_threshold}")
+    return within_threshold

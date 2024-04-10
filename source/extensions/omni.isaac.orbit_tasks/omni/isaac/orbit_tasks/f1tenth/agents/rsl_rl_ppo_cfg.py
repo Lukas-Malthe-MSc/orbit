@@ -29,7 +29,7 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         init_noise_std=1.0,
         actor_hidden_dims=[512, 256, 128],
         critic_hidden_dims=[512, 256, 128],
-        activation="elu",
+        activation="tanh",
     )
     # policy = RslRlActorCriticRecurrentCfg(
     #     init_noise_std=1.0,
