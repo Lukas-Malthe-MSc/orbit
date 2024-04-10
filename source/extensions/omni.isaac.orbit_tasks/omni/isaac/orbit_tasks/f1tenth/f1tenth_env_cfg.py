@@ -19,6 +19,7 @@ from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.orbit.scene import InteractiveSceneCfg
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
+from omni.isaac.orbit.utils.noise import AdditiveGaussianNoiseCfg as Gnoise
 
 import omni.isaac.orbit_tasks.f1tenth.mdp as mdp
 
@@ -41,7 +42,7 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-05_12-34-44 --checkpoint model_49.pt
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-10_09-12-30 --checkpoint model_100.pt
 
 """
 @configclass
@@ -51,7 +52,9 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     # ground plane
     ground = AssetBaseCfg(
         prim_path="/World/ground",
-        spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0)),
+        spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0),
+                                       color=(0.5, 0.5, 0.5)),
+        
     )
     # lights
     dome_light = AssetBaseCfg(
@@ -64,12 +67,19 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(rot=(0.738, 0.477, 0.477, 0.0)),
     )
     
+    # target = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/target",
+    #     spawn=sim_utils.SphereCfg(radius=0.1),
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(5.0, 4.0, 0.0),rot=(0.0, 0.0, 0.0, 0.0)),
+    # )
+
+    # target = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/target",
+    #     spawn=sim_utils.CuboidCfg(size=(0.1, 2.0, 0.1)),
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0),
+    #                                             rot=(0.0, 0.0, 0.0, 0.0)),
+    # )
     
-    target = AssetBaseCfg(
-        prim_path="/World/target",
-        spawn=sim_utils.SphereCfg(radius=0.1),
-        init_state=AssetBaseCfg.InitialStateCfg(pos=(5.0, 4.0, 0.0),rot=(0.0, 0.0, 0.0, 0.0)),
-    )
     
     # f1tenth
     robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
@@ -89,7 +99,9 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
             pos=(0.11749, 0.0, 0.1),  # Example position offset from the robot base
             rot=(1.0, 0.0, 0.0, 0.0),  # Example rotation offset; no rotation in this case
             convention="ros"  # Frame convention
-        )
+        ),
+        draw_lines=False,
+        draw_points=False,
     )
     
     race_track = AssetBaseCfg( 
@@ -130,7 +142,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=4.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=2.0, max_steering_angle=math.pi/4, scale=(1.0, 1.0), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -143,10 +155,10 @@ class ObservationsCfg:
         # observation terms (order preserved)
         # base_pos = ObsTerm(func=mdp.base_pos, noise=Unoise(n_min=-0.1, n_max=0.1))
         # base_rot = ObsTerm(func=mdp.base_rot, noise=Unoise(n_min=-0.1, n_max=0.1))
-        base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
-        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
+        base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Gnoise(mean=0.0, std=0.1))
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Gnoise(mean=0.0, std=0.1))
         
-        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, noise=Unoise(n_min=-0.1, n_max=0.1), params={"sensor_cfg": SceneEntityCfg("lidar")})
+        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, noise=Gnoise(mean=0.0, std=0.1), params={"sensor_cfg": SceneEntityCfg("lidar")})
         
         last_actions = ObsTerm(func=mdp.last_action)
 
@@ -169,7 +181,7 @@ class RandomizationCfg:
             "asset_cfg": SceneEntityCfg("robot"), 
             "pose_range": {
                 # "x": (-0.3, 0.3),  # X position range from -5 to 5
-                "x": (3.0, 3.5),  # X position range from -5 to 5
+                "x": (0.0, 0.5),  # X position range from -5 to 5
                 "y": (-0.3, 0.3),  # Y position range from -5 to 5
                 "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (-0.2, 0.2),  # Roll orientation range from -pi to pi
@@ -186,6 +198,8 @@ class RandomizationCfg:
             }     
         },
     )
+    
+    
 
 
 @configclass
@@ -193,14 +207,21 @@ class RewardsCfg:
     """Reward terms for the MDP."""
 
     # (1) Constant running reward
-    alive = RewTerm(func=mdp.is_alive, weight=0.5)
+    # alive = RewTerm(func=mdp.is_alive, weight=0.5)
     # # (2) Failure penalty
-    terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
+    # terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
     
     # -- Task: Drive forward
     velocity = RewTerm(func=mdp.forward_velocity, weight=1.0)
     
     # passed_starting_location = RewTerm(func=mdp.passed_starting_location, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
+    # passed_starting_lcation = RewTerm(func=mdp.touch_target, 
+    #                                   weight=1.0, 
+    #                                   params={"asset_cfg": SceneEntityCfg("robot"), 
+    #                                           "target_cfg": SceneEntityCfg("target"),
+    #                                             "threshold": 0.5
+    #                                           } 
+    #                                   )
     
     # update_pass_counters = RewTerm(func=mdp.update_pass_counters, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
     
@@ -211,17 +232,17 @@ class RewardsCfg:
     # move_to_position = RewTerm(func=mdp.move_to_position, weight=-1.0, params={"target": (5.0, 4.0), "asset_cfg": SceneEntityCfg("robot")})
     
     # -- Penalty
-    steering_angle_position = RewTerm(
-        func=mdp.joint_pos_target_l2,
-        weight=-0.05,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
-    )
+    # steering_angle_position = RewTerm(
+    #     func=mdp.joint_pos_target_l2,
+    #     weight=-0.05,
+    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+    # )
     
-    # -- Penalty
-    min_lidar_distance = RewTerm(
-        func=mdp.lidar_min_distance,
-        weight=-0.01,
-        params={"sensor_cfg": SceneEntityCfg("lidar")})
+    # # -- Penalty
+    # min_lidar_distance = RewTerm(
+    #     func=mdp.lidar_min_distance,
+    #     weight=-0.01,
+    #     params={"sensor_cfg": SceneEntityCfg("lidar")})
     
 @configclass
 class TerminationsCfg:

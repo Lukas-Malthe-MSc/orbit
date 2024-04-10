@@ -173,6 +173,13 @@ class Lidar(SensorBase):
             
             if self.cfg.vertical_resolution is not None:
                 lidar.GetVerticalResolutionAttr().Set(self.cfg.vertical_resolution)
+                
+            if self.cfg.draw_lines is not None:
+                lidar.GetDrawLinesAttr().Set(self.cfg.draw_lines)
+                
+            if self.cfg.draw_points is not None:
+                lidar.GetDrawPointsAttr().Set(self.cfg.draw_points)
+                
 
             # Additional LiDAR-specific properties can be set here as needed.
 
