@@ -1,0 +1,24 @@
+--- git status ---
+HEAD detached at f6e5798
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   rsl_rl/runners/on_policy_runner.py
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/rsl_rl/runners/on_policy_runner.py b/rsl_rl/runners/on_policy_runner.py
+index 92c8092..3c8e24a 100644
+--- a/rsl_rl/runners/on_policy_runner.py
++++ b/rsl_rl/runners/on_policy_runner.py
+@@ -21,7 +21,7 @@ class OnPolicyRunner:
+     """On-policy runner for training and evaluation."""
+ 
+     def __init__(self, env: VecEnv, train_cfg, log_dir=None, device="cpu"):
+-        print("Training on device:", device)
++        print(f"!!!!!!!!!!!!WE ARE USING OUR IMPLEMENTATION!!!!!!!!!!!!1")
+         self.cfg = train_cfg
+         self.alg_cfg = train_cfg["algorithm"]
+         self.policy_cfg = train_cfg["policy"]
