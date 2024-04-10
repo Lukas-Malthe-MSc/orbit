@@ -1,0 +1,44 @@
+--- git status ---
+On branch f1tenth-environment
+Your branch is up to date with 'origin/f1tenth-environment'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   rsl_rl (modified content)
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	logs/rsl_rl/f1tenth/2024-04-09_11-35-58/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/rsl_rl b/rsl_rl
+--- a/rsl_rl
++++ b/rsl_rl
+@@ -1 +1 @@
+-Subproject commit f6e5798e5e1bbb3e556fd0720d7a50a013b013b5
++Subproject commit f6e5798e5e1bbb3e556fd0720d7a50a013b013b5-dirty
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+index 531bd0e..7da5f7c 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+@@ -20,11 +20,11 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
+ @configclass
+ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
+     num_steps_per_env = 24
+-    max_iterations = 1000
+-    save_interval = 100
++    max_iterations = 10
++    save_interval = 5
+     experiment_name = "f1tenth"
+     empirical_normalization = False
+-    device = "cuda:0"
++    device = "cuda:1"
+     policy = RslRlPpoActorCriticCfg(
+         init_noise_std=1.0,
+         actor_hidden_dims=[512, 256, 128],
