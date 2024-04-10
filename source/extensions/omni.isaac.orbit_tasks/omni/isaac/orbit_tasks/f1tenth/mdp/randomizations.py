@@ -23,3 +23,4 @@ import random
 #             init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0),
 #                                                     rot=(0.0, 0.0, 0.0, 0.0)),
 #         )
+

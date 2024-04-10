@@ -42,7 +42,7 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-10_09-12-30 --checkpoint model_100.pt
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-10_11-27-17 --checkpoint model_49.pt
 
 """
 @configclass
