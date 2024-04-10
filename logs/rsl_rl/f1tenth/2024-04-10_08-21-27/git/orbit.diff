@@ -1,0 +1,32 @@
+--- git status ---
+On branch f1tenth-environment
+Your branch is up to date with 'origin/f1tenth-environment'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	core.4963
+	logs/rsl_rl/f1tenth/2024-04-10_08-17-02/
+	logs/rsl_rl/f1tenth/2024-04-10_08-21-27/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+index 7da5f7c..75f0d07 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+@@ -24,7 +24,7 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
+     save_interval = 5
+     experiment_name = "f1tenth"
+     empirical_normalization = False
+-    device = "cuda:1"
++    device = "cuda:0"
+     policy = RslRlPpoActorCriticCfg(
+         init_noise_std=1.0,
+         actor_hidden_dims=[512, 256, 128],

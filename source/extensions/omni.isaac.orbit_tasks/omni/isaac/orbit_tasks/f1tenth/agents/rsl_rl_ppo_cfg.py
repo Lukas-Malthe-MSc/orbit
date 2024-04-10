@@ -20,12 +20,12 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 10
-    save_interval = 5
+    max_iterations = 3
+    save_interval = 2
     experiment_name = "f1tenth"
     empirical_normalization = False
-    device = "cuda:1"
-    policy = RslRlPpoActorCriticCfg(
+    device = "cuda:0"
+    policy = RslRlActorCriticRecurrentCfg(
         init_noise_std=1.0,
         actor_hidden_dims=[512, 256, 128],
         critic_hidden_dims=[512, 256, 128],
