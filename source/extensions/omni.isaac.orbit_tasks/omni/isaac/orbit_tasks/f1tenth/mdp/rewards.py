@@ -36,9 +36,8 @@ def forward_velocity(
     """Root linear velocity in the asset's root frame."""
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
-    return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
     # print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
-    # return asset.data.root_lin_vel_b[:, 0]
+    return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
 
 def lidar_distance_sum(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Terminate when the asset's joint velocities are outside of the soft joint limits."""
@@ -131,3 +130,21 @@ def update_pass_counters(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: f
     env.pass_counters[asset_cfg.name] = pass_counters
 
     return pass_counters
+
+
+# Reward for touching target
+def touch_target(env: RLTaskEnv, asset_cfg: SceneEntityCfg, target_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
+    """Reward for touching the target."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    target: Articulation = env.scene[target_cfg.name]
+    
+    print(f"target_contact: {target.cfg.collision_group}")
+    
+    # Check if there is collision between the asset and the target
+    collision_threshold = asset.data.root_pos_w[:, :2]
+    
+    if collision_threshold:
+        print("THROAT GOAT")
+        return torch.tensor([1.0], device=asset.device)
+    else:
+        return torch.tensor([0.0], device=asset.device)
