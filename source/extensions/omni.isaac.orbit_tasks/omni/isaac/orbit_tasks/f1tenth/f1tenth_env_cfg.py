@@ -43,7 +43,11 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
+<<<<<<< HEAD
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-11_15-43-09 --checkpoint model_49.pt
+=======
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-11_13-40-21 --checkpoint model_40.pt
+>>>>>>> 10847cde537700ecc806bf6eeb9c68f380e2004c
 
 """
 @configclass
@@ -98,6 +102,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         rotation_rate=0.0,  # Rotation rate of 0.0 radians per second
         offset=LidarCfg.OffsetCfg(
             pos=(0.11749, 0.0, 0.1),  # Example position offset from the robot base
+            
             rot=(1.0, 0.0, 0.0, 0.0),  # Example rotation offset; no rotation in this case
             convention="ros"  # Frame convention
         ),
@@ -143,7 +148,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, max_speed=2.0, max_steering_angle=math.pi/4, scale=(2.0, torch.pi), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, scale=(2.0, torch.pi/4), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -152,14 +157,13 @@ class ObservationsCfg:
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
-
+        
+        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, noise=Gnoise(mean=0.0, std=0.1), params={"sensor_cfg": SceneEntityCfg("lidar")})
         # observation terms (order preserved)
         # base_pos = ObsTerm(func=mdp.base_pos, noise=Unoise(n_min=-0.1, n_max=0.1))
         # base_rot = ObsTerm(func=mdp.base_rot, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Gnoise(mean=0.0, std=0.1))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Gnoise(mean=0.0, std=0.1))
-        
-        lidar_ranges = ObsTerm(func=mdp.lidar_ranges, noise=Gnoise(mean=0.0, std=0.1), params={"sensor_cfg": SceneEntityCfg("lidar")})
         
         last_actions = ObsTerm(func=mdp.last_action)
 
@@ -217,7 +221,7 @@ class RewardsCfg:
     # distance_traveled_reward = RewTerm(func=mdp.distance_traveled_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
     speed_scaled_distance_reward = RewTerm(func=mdp.speed_scaled_distance_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
     
-    # within_starting_location = RewTerm(func=mdp.within_starting_location, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
+    # within_starting_location = RewTerm(func=mdp.within_starting_location, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 1.5})
     
     # update_pass_counters = RewTerm(func=mdp.update_pass_counters, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
     
@@ -298,3 +302,5 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings
         self.sim.dt = 1 / 40  # 120
+
+
