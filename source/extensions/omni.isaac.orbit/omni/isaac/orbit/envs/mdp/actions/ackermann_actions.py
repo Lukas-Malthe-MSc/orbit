@@ -79,8 +79,6 @@ class AckermannAction(ActionTerm):
         self.base_length = torch.tensor(cfg.base_length, device=self.device)
         self.base_width = torch.tensor(cfg.base_width, device=self.device)
         self.wheel_rad = torch.tensor(cfg.wheel_radius, device=self.device)
-        self.max_speed = torch.tensor(cfg.max_speed, device=self.device)
-        self.max_steering_angle = torch.tensor(cfg.max_steering_angle, device=self.device)
 
     """
     Properties.
@@ -106,16 +104,13 @@ class AckermannAction(ActionTerm):
 
     def process_actions(self, actions):
         # store the raw actions
-        # actions[:, 0] = torch.clamp(actions[:, 0], min=2., max=2.)
-        # actions[:, 1] = torch.clamp(actions[:, 1], min=0.1, max=0.1)
-        # print(f"Applying actions: {actions}")
-        self._raw_actions[:] = actions
+        self._raw_actions[:] = torch.tanh(actions)
         
         self._processed_actions = self.raw_actions * self._scale + self._offset
-        self._processed_actions[:, 0] = torch.clamp(self._processed_actions[:, 0], min=-self.max_speed, max=self.max_speed)
-        self._processed_actions[:, 1] = torch.clamp(self._processed_actions[:, 1], min=-self.max_steering_angle, max=self.max_steering_angle)
-        # print(f"Processed actions: {self._processed_actions}")
+        
+        # print("Processed actions: ", self._processed_actions)
 
+            
     def apply_actions(self):
         
 

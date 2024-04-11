@@ -39,14 +39,6 @@ def forward_velocity(
     # print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
     return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
 
-def lidar_distance_sum(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
-    """Terminate when the asset's joint velocities are outside of the soft joint limits."""
-    """The ranges from the given lidar sensor."""
-    # extract the used quantities (to enable type-hinting)
-    sensor: Lidar = env.scene[sensor_cfg.name]
-    lidar_ranges = sensor.data.output
- 
-    return torch.sum(lidar_ranges, dim=1)
 
 def lidar_mean_absolute_deviation(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """The mean absolute deviation of the lidar readings."""
@@ -64,13 +56,6 @@ def lidar_min_distance(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tens
     min_distances = torch.min(lidar_ranges, dim=1).values
     return 1/min_distances
 
-# move to position x, y
-def move_to_position(env: RLTaskEnv, target: torch.Tensor, asset_cfg: SceneEntityCfg) -> torch.Tensor:
-    """Penalize the distance between the asset's root position and the target position."""
-    # extract the used quantities (to enable type-hinting)
-    asset: Articulation = env.scene[asset_cfg.name]
-    # compute the reward
-    return torch.sqrt(torch.sum(torch.square(asset.data.root_pos_w[:, :2] - target), dim=1))
 
 def passed_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
     """Checks if assets have passed their starting locations within some threshold."""
@@ -136,31 +121,40 @@ def update_pass_counters(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: f
     return pass_counters
 
 
-def within_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
-    """Checks if assets are within their starting locations +- a threshold."""
+def timed_lap_time(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
+    """Checks if assets are within their starting locations +- a threshold and prints time elapsed since leaving and returning for each asset."""
     # Access the asset
     asset: Articulation = env.scene[asset_cfg.name]
 
-    # Check if we've already captured the starting positions for this asset
-    if asset_cfg.name not in env.starting_positions or any(env.termination_manager.time_outs):
-        # Capture and store the starting positions
-        env.starting_positions[asset_cfg.name] = asset.data.root_pos_w[:, :2].clone()
-        print(f"starting_positions: {env.starting_positions[asset_cfg.name]}")
+    num_assets = asset.data.root_pos_w.shape[0]  # Assuming this gives the number of individual assets
 
-    # If it's too early in the simulation, assume we're within the starting location
-    if env.common_step_counter < 100:
-        return torch.zeros(asset.data.root_pos_w.shape[0], dtype=torch.bool, device=asset.device)
-    
-    # Retrieve the starting positions
-    starting_positions = env.starting_positions[asset_cfg.name]
+    # Initialize tracking if not already done or if there's a timeout event
+    if asset_cfg.name not in env.starting_positions: #any(env.termination_manager.time_outs)
+        env.starting_positions[asset_cfg.name] = {
+            "position": asset.data.root_pos_w[:, :2].clone(),
+            "left_at_step": torch.full((num_assets,), -1, dtype=torch.int64),  # -1 indicates that the asset hasn't left yet
+            "returned_at_step": torch.full((num_assets,), -1, dtype=torch.int64)  # Step counter when the asset last returned within the threshold
+        }
 
-    # Compute the difference in positions
-    position_differences = asset.data.root_pos_w[:, :2] - starting_positions
+    tracking_info = env.starting_positions[asset_cfg.name]
 
-    # Calculate the distance moved from the starting positions
+    # Compute the difference in positions and the distance moved for each asset
+    position_differences = asset.data.root_pos_w[:, :2] - tracking_info["position"]
     distance_moved = torch.norm(position_differences, dim=1)
 
     # Check if the assets are within the threshold of their starting positions
     within_threshold = distance_moved <= threshold
-    # print(f"within_starting_location: {within_threshold}")
+
+    for i in range(num_assets):
+        if within_threshold[i] and tracking_info["left_at_step"][i] >= 0:
+            # Calculate and print the elapsed time for assets that have returned
+            tracking_info["returned_at_step"][i] = env.common_step_counter
+            time_elapsed = (tracking_info["returned_at_step"][i] - tracking_info["left_at_step"][i]) * env.step_dt
+            print(f"Asset {i}: Time elapsed since leaving and returning: {time_elapsed} seconds")
+            tracking_info["left_at_step"][i] = -1  # Reset after calculating time
+
+        elif not within_threshold[i] and tracking_info["left_at_step"][i] < 0:
+            # Mark the step counter for assets that just left the threshold
+            tracking_info["left_at_step"][i] = env.common_step_counter
+
     return within_threshold
