@@ -36,26 +36,78 @@ def forward_velocity(
     """Root linear velocity in the asset's root frame."""
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
-    # print(f"forward_velocity: {asset.data.root_lin_vel_b[:, 0]}")
     return torch.max(asset.data.root_lin_vel_b[:, 0], torch.zeros(asset.data.root_lin_vel_b[:, 0].shape, device=asset.device))
 
-def lidar_distance_sum(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
-    """Terminate when the asset's joint velocities are outside of the soft joint limits."""
-    """The ranges from the given lidar sensor."""
-    # extract the used quantities (to enable type-hinting)
-    sensor: Lidar = env.scene[sensor_cfg.name]
-    lidar_ranges = sensor.data.output
- 
-    return torch.sum(lidar_ranges, dim=1)
+def distance_traveled_reward(env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    """
+    Calculates the reward based on the distance traveled by the asset in the forward direction.
 
-def lidar_mean_absolute_deviation(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
-    """The mean absolute deviation of the lidar readings."""
-    sensor: Lidar = env.scene[sensor_cfg.name]
-    lidar_ranges = sensor.data.output
-    
-    mean = torch.mean(lidar_ranges, dim=1)
-    absolute_deviation = torch.abs(lidar_ranges - mean.unsqueeze(1))
-    return torch.mean(absolute_deviation, dim=1)
+    Args:
+        env (RLTaskEnv): The environment containing the simulation and assets.
+        asset_cfg (SceneEntityCfg): Configuration for the asset whose distance traveled is to be calculated.
+
+    Returns:
+        torch.Tensor: The distance traveled by the asset since the last timestep.
+    """
+    # Access the asset
+    asset: RigidObject = env.scene[asset_cfg.name]
+
+    # Check if the previous position is stored
+    if 'prev_position' not in env.custom_data:
+        # Initialize previous position if not present
+        env.custom_data['prev_position'] = asset.data.root_pos_w[:, :2].clone()
+
+    # Calculate the difference in position from the last step
+    current_position = asset.data.root_pos_w[:, :2]
+    position_difference = current_position - env.custom_data['prev_position']
+
+    # Calculate the Euclidean distance traveled since the last step
+    distance_traveled = torch.norm(position_difference, dim=1)
+
+    # Update the previous position for the next timestep
+    env.custom_data['prev_position'] = current_position.clone()
+
+    return distance_traveled
+
+def speed_scaled_distance_reward(env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    """
+    Calculates a reward based on the distance traveled scaled by the time taken, rewarding faster travel over a given distance.
+
+    Args:
+        env (RLTaskEnv): The environment containing the simulation and assets.
+        asset_cfg (SceneEntityCfg): Configuration for the asset whose performance is being evaluated.
+
+    Returns:
+        torch.Tensor: The scaled reward for the asset's travel over the last timestep.
+    """
+    # Access the asset
+    asset: RigidObject = env.scene[asset_cfg.name]
+
+    # Initialize or retrieve previous position for distance calculation
+    if 'prev_position' not in env.custom_data:
+        env.custom_data['prev_position'] = asset.data.root_pos_w[:, :2].clone()
+        return torch.tensor(0.0)  # No reward on the first step
+
+    # Calculate the difference in position from the last step
+    current_position = asset.data.root_pos_w[:, :2]
+    position_difference = current_position - env.custom_data['prev_position']
+
+    # Calculate the Euclidean distance traveled since the last step
+    distance_traveled = torch.norm(position_difference, dim=1)
+
+    # Assuming env.step_dt represents the time elapsed between steps
+    time_elapsed = env.step_dt
+
+    # Calculate the reward as distance divided by time (speed)
+    # In environments with consistent time steps, you could simply use `distance_traveled` as the reward.
+    reward = distance_traveled / time_elapsed
+
+    # Update the previous position for the next timestep
+    env.custom_data['prev_position'] = current_position.clone()
+
+    return reward
+
+
 
 def lidar_min_distance(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """The min distance of the lidar scans."""

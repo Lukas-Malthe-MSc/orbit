@@ -43,7 +43,7 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-10_14-10-22 --checkpoint model_49.pt
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-11_15-43-09 --checkpoint model_49.pt
 
 """
 @configclass
@@ -110,9 +110,9 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         collision_group=-1,
         spawn=sim_utils.UsdFileCfg(
             # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/racetrack_square.usd",
+            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_2.usd",
             # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
-            scale=(.01, .01, .01),
+            scale=(.015, .015, .015),
         )
     )
 
@@ -182,12 +182,12 @@ class RandomizationCfg:
             "asset_cfg": SceneEntityCfg("robot"), 
             "pose_range": {
                 # "x": (-0.3, 0.3),  # X position range from -5 to 5
-                "x": (0.0, 0.5),  # X position range from -5 to 5
-                "y": (-0.3, 0.3),  # Y position range from -5 to 5
-                "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (-0.2, 0.2),  # Roll orientation range from -pi to pi
-                "pitch": (-0.2, 0.2), # Pitch orientation range from -pi to pi
-                "yaw": (-0.1, 0.1),   # Yaw orientation range from -pi to pi
+                "x": (0.0, 0.0),  # X position range from -5 to 5
+                "y": (0.0, 0.0),  # Y position range from -5 to 5
+                "z": (0.0, 0.2),   # Z position range from 0 to 2 (assuming starting on the ground)
+                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
             }, 
             "velocity_range": {
                 "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
@@ -213,7 +213,9 @@ class RewardsCfg:
     # terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
     
     # -- Task: Drive forward
-    velocity = RewTerm(func=mdp.forward_velocity, weight=1.0)
+    # forward_velocity_reward = RewTerm(func=mdp.forward_velocity, weight=1.0)
+    # distance_traveled_reward = RewTerm(func=mdp.distance_traveled_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
+    speed_scaled_distance_reward = RewTerm(func=mdp.speed_scaled_distance_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
     
     # within_starting_location = RewTerm(func=mdp.within_starting_location, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
     
@@ -274,7 +276,7 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
     """Configuration for the locomotion velocity-tracking environment."""
 
     # Scene settings
-    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=15.0, replicate_physics=True)
+    scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=18.0, replicate_physics=True)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

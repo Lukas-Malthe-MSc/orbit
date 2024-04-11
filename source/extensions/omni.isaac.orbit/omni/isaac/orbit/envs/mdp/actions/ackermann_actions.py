@@ -111,10 +111,12 @@ class AckermannAction(ActionTerm):
         # print(f"Applying actions: {actions}")
         self._raw_actions[:] = actions
         
+        print(f"Raw actions: {self._raw_actions}")
+        
         self._processed_actions = self.raw_actions * self._scale + self._offset
         self._processed_actions[:, 0] = torch.clamp(self._processed_actions[:, 0], min=-self.max_speed, max=self.max_speed)
         self._processed_actions[:, 1] = torch.clamp(self._processed_actions[:, 1], min=-self.max_steering_angle, max=self.max_steering_angle)
-        # print(f"Processed actions: {self._processed_actions}")
+        print(f"Processed actions: {self._processed_actions}")
 
     def apply_actions(self):
         
