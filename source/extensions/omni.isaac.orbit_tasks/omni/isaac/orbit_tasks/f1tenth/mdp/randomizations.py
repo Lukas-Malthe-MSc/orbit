@@ -3,24 +3,18 @@ from __future__ import annotations
 import torch
 from typing import TYPE_CHECKING
 
-from omni.isaac.orbit.assets import AssetBaseCfg
+from omni.isaac.orbit.assets import AssetBaseCfg, RigidObjectCfg, Articulation, RigidObject, AssetBase
 import omni.isaac.orbit.sim as sim_utils
+from omni.isaac.orbit.managers import SceneEntityCfg
 
 if TYPE_CHECKING:
-    from omni.isaac.orbit.envs import RLTaskEnv
+    from omni.isaac.orbit.envs import RLTaskEnv, BaseEnv
     
 import random
 
-# def spawn_obstacles(env: RLTaskEnv, asset_cfg: AssetBaseCfg, num_obstacles: int, obstacle_type: str) -> None:
-#     """Spawn obstacles in the environment."""
-#     # spawn obstacles
-#     for _ in range(num_obstacles):
-#         # randomize the position of the obstacle
-#         # spawn the obstacle
-#         obstacle = AssetBaseCfg(
-#             prim_path="{ENV_REGEX_NS}/obstacle",
-#             spawn=sim_utils.CuboidCfg(size=(0.1, 2.0, 0.1)),
-#             init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0),
-#                                                     rot=(0.0, 0.0, 0.0, 0.0)),
-#         )
+# randomize obstacle position
+def randomize_obstacle_position(env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("cone1")):
+    obstacle: RigidObjectCfg = env.scene[asset_cfg.name]
 
+    obstacle.InitialStateCfg().pos = (random.uniform(-5, 5), random.uniform(-5, 5), 0)
+    

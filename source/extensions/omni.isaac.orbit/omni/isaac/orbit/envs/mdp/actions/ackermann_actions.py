@@ -100,31 +100,20 @@ class AckermannAction(ActionTerm):
     Operations.
     """
 
-
-
     def process_actions(self, actions):
         # store the raw actions
-        self._raw_actions[:] = torch.tanh(actions)
+        self._raw_actions[:] = torch.tanh(actions) # Normalize the actions to [-1, 1]
         
-        print(f"Raw actions: {self._raw_actions}")
-        
-        self._processed_actions = self.raw_actions * self._scale + self._offset
-        self._processed_actions[:, 0] = torch.clamp(self._processed_actions[:, 0], min=-self.max_speed, max=self.max_speed)
-        self._processed_actions[:, 1] = torch.clamp(self._processed_actions[:, 1], min=-self.max_steering_angle, max=self.max_steering_angle)
-        print(f"Processed actions: {self._processed_actions}")
-
+        self._processed_actions = self.raw_actions * self._scale + self._offset # Scale and offset the actions
+        print("Processed actions: ", self._processed_actions)
             
     def apply_actions(self):
-        
 
         left_rotator_angle, right_rotator_angle, wheel_speeds = self. calculate_ackermann_angles_and_velocities(
             target_velocity=self.processed_actions[:, 0],  # Velocity for all cars
             target_steering_angle_rad=self.processed_actions[:, 1] # Steering angle for all cars
         )
         wheel_angles = torch.stack([left_rotator_angle, right_rotator_angle], dim=1)
-
-        # wheel_angles = torch.zeros(wheel_speeds.shape[0], 2, device=self.device)
-        # wheel_speeds = torch.ones(wheel_speeds.shape[0], 4, device=self.device)
 
         self._asset.set_joint_velocity_target(wheel_speeds, joint_ids=self._wheel_ids)
         self._asset.set_joint_position_target(wheel_angles, joint_ids=self._steering_ids)
@@ -139,7 +128,6 @@ class AckermannAction(ActionTerm):
         # Ensure inputs are PyTorch tensors
         target_steering_angle_rad = target_steering_angle_rad.float()
         target_velocity = target_velocity.float()
-        
         
         # Calculating the turn radius from the steering angle
         tan_steering = torch.tan(target_steering_angle_rad)
@@ -164,46 +152,7 @@ class AckermannAction(ActionTerm):
         wheel_speeds = torch.stack([v_back_left, v_back_right, v_front_left, v_front_right], dim=1) / wheel_radius
         
         return delta_left, delta_right, wheel_speeds
-    
-#     def calculate_ackermann_angles_and_velocities(self, target_steering_angle_rad, target_velocity):
-        
-        
-# #           B
-# #           |\
-# #           | \
-# #           |  \
-# #          a|   \c
-# #           |    \
-# #           |     \
-# #           |______\
-# #           C   b   A
-# #
-# #           Tan(B)=b/a   <--->  b=a*Tan(B)
-# # In our case we know C=90, a = base_length and B = 90-steering_angle
 
-#         R_nutnut = self.base_length * torch.tan(abs((0.5*torch.pi)-target_steering_angle_rad))
-
-    
-#         inner_diff = torch.atan(self.base_length / (R - self.base_width / 2))
-#         outer_diff = torch.atan(self.base_length / (R + self.base_width / 2))
-        
-        
-        
-        
-        
-        
-        
-        
-#         # If target steering is positive, we turn right
-#         if target_steering_angle_rad > 0:
-#             left_rotator_angle = outer_diff
-#             right_rotator_angle = inner_diff
-            
-#             left_front_radius = 0
-#             right_front_radius = 0
-#             left_back_radius = 0
-#             right_back_radius = 0
-            
             
 
         

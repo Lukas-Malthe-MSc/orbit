@@ -9,7 +9,7 @@ from omni.isaac.orbit.sensors.lidar.lidar_cfg import LidarCfg
 from rich import print
 
 import omni.isaac.orbit.sim as sim_utils
-from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
+from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
 from omni.isaac.orbit.managers import ObservationGroupCfg as ObsGroup
 from omni.isaac.orbit.managers import ObservationTermCfg as ObsTerm
@@ -29,7 +29,7 @@ import omni.isaac.orbit_tasks.f1tenth.mdp as mdp
 ##
 from omni.isaac.orbit_assets.f1tenth import F1TENTH_CFG  # isort:skip
 
-
+import random
 ##
 # Scene definition
 ##
@@ -43,13 +43,22 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-<<<<<<< HEAD
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-11_15-43-09 --checkpoint model_49.pt
-=======
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 4 --load_run 2024-04-11_13-40-21 --checkpoint model_40.pt
->>>>>>> 10847cde537700ecc806bf6eeb9c68f380e2004c
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-12_11-31-44 --checkpoint model_199.pt
 
 """
+
+
+
+
+def random_spawn_position():
+    # Define boundaries for random spawn locations
+    x_min, x_max = -5.0, 5.0  # Adjust these values to your requirements
+    y_min, y_max = -5.0, 5.0  # Adjust these values to your requirements
+    z_pos = 2.0  # Assuming you want to keep the Z position fixed
+    x = random.uniform(x_min, x_max)
+    y = random.uniform(y_min, y_max)
+    return (x, y, z_pos)
+
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
     """Configuration for a cart-pole scene."""
@@ -78,12 +87,23 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     #     init_state=AssetBaseCfg.InitialStateCfg(pos=(5.0, 4.0, 0.0),rot=(0.0, 0.0, 0.0, 0.0)),
     # )
 
-    # obstacle = [AssetBaseCfg(
-    #     prim_path="{ENV_REGEX_NS}/target",
-    #     spawn=sim_utils.CuboidCfg(size=(0.1, 2.0, 0.1)),
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0),
-    #                                             rot=(0.0, 0.0, 0.0, 0.0)),
-    # )for i in range(4)]
+    cone1: RigidObjectCfg = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/cone1",
+        spawn=sim_utils.ConeCfg(radius=0.15, height=0.5, 
+                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                collision_props=sim_utils.CollisionPropertiesCfg()),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=random_spawn_position(),
+                                                rot=(1.0, 0.0, 0.0, 0.0)),
+    )
+
+    # obstacle2 = RigidObjectCfg(
+    #     prim_path="{ENV_REGEX_NS}/obstacle2",
+    #     spawn=sim_utils.ConeCfg(radius=0.15, height=0.5, 
+    #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+    #     init_state=RigidObjectCfg.InitialStateCfg(pos=random_spawn_position(),
+    #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+    # )
     
     
     # f1tenth
@@ -121,13 +141,6 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         )
     )
 
-    
-    # TODO: Add touch sensor that can register collisions with the walls
-    # Check ant_env_cfg.py for an example of how to add a touch sensor
-
-
-
-
 ##
 # MDP settings
 ##
@@ -148,7 +161,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, scale=(2.0, torch.pi/4), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, scale=(3.0, torch.pi/4), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -185,8 +198,7 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("robot"), 
             "pose_range": {
-                # "x": (-0.3, 0.3),  # X position range from -5 to 5
-                "x": (0.0, 0.0),  # X position range from -5 to 5
+                "x": (1.0, 1.0),  # X position range from -5 to 5
                 "y": (0.0, 0.0),  # Y position range from -5 to 5
                 "z": (0.0, 0.2),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
@@ -204,6 +216,12 @@ class RandomizationCfg:
         },
     )
     
+    # randomize_obstacle1 = RandTerm(
+    #     func=mdp.randomize_obstacle_position,
+    #     mode="interval",
+    #     interval_range_s=(0.0, 1.0),
+    #     params={"asset_cfg": SceneEntityCfg("cone1")}
+    # )
     
 
 
@@ -217,32 +235,22 @@ class RewardsCfg:
     # terminating = RewTerm(func=mdp.is_terminated, weight=-10.0)
     
     # -- Task: Drive forward
-    # forward_velocity_reward = RewTerm(func=mdp.forward_velocity, weight=1.0)
+    forward_velocity_reward = RewTerm(func=mdp.forward_velocity, weight=1.0)
     # distance_traveled_reward = RewTerm(func=mdp.distance_traveled_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
-    speed_scaled_distance_reward = RewTerm(func=mdp.speed_scaled_distance_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
-    
-    # within_starting_location = RewTerm(func=mdp.within_starting_location, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 1.5})
-    
-    # update_pass_counters = RewTerm(func=mdp.update_pass_counters, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot"), "threshold": 0.5})
-    
-    # -- Task: Move to center of track
-    # lidar_deviation = RewTerm(func=mdp.lidar_mean_absolute_deviation, weight=-1.0, params={"sensor_cfg": SceneEntityCfg("lidar")})
-    
-    # -- Task: Move to position
-    # move_to_position = RewTerm(func=mdp.move_to_position, weight=-1.0, params={"target": (5.0, 4.0), "asset_cfg": SceneEntityCfg("robot")})
+    # speed_scaled_distance_reward = RewTerm(func=mdp.speed_scaled_distance_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
     
     # -- Penalty
-    # steering_angle_position = RewTerm(
-    #     func=mdp.joint_pos_target_l2,
-    #     weight=-0.05,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
-    # )
+    steering_angle_position = RewTerm(
+        func=mdp.joint_pos_target_l2,
+        weight=-0.05,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+    )
     
-    # # -- Penalty
-    # min_lidar_distance = RewTerm(
-    #     func=mdp.lidar_min_distance,
-    #     weight=-0.01,
-    #     params={"sensor_cfg": SceneEntityCfg("lidar")})
+    # -- Penalty
+    min_lidar_distance = RewTerm(
+        func=mdp.lidar_min_distance,
+        weight=-0.01,
+        params={"sensor_cfg": SceneEntityCfg("lidar")})
     
 @configclass
 class TerminationsCfg:
