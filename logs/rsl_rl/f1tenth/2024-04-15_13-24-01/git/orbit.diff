@@ -1,0 +1,160 @@
+--- git status ---
+On branch attention
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   NOTES_TO_SELF.md
+	deleted:    core.4963
+	modified:   rsl_rl (modified content)
+	modified:   source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/mdp/actions/ackermann_actions.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	logs/rsl_rl/f1tenth/2024-04-15_07-58-13/
+	logs/rsl_rl/f1tenth/2024-04-15_10-31-34/
+	logs/rsl_rl/f1tenth/2024-04-15_10-35-06/
+	logs/rsl_rl/f1tenth/2024-04-15_10-49-44/
+	logs/rsl_rl/f1tenth/2024-04-15_10-54-50/
+	logs/rsl_rl/f1tenth/2024-04-15_11-57-21/
+	logs/rsl_rl/f1tenth/2024-04-15_13-01-04/
+	logs/rsl_rl/f1tenth/2024-04-15_13-05-32/
+	logs/rsl_rl/f1tenth/2024-04-15_13-16-09/
+	logs/rsl_rl/f1tenth/2024-04-15_13-20-37/
+	logs/rsl_rl/f1tenth/2024-04-15_13-24-01/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/NOTES_TO_SELF.md b/NOTES_TO_SELF.md
+index 591564d..b705ab4 100644
+--- a/NOTES_TO_SELF.md
++++ b/NOTES_TO_SELF.md
+@@ -60,3 +60,24 @@ This step ensures that the `ssh` command is available in your container, facilit
+ 
+ - These instructions assume you have the necessary permissions within the container to install new packages. You may need to prepend `sudo` to the commands if you're not operating as the root user.
+ - Be sure to verify the path to the Isaac Sim directory and the location of the configuration file, as these may vary based on your specific installation and version of Isaac Sim.
++
++### bashrc
++To train, add this:
++```bash
++train() {
++    ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs $1
++}
++```  
++to ```~/.bashrc```. It is run as ```train 2048```for 2048 envs and so on.
++
++### rsl_rl
++To get our fork working first:
++```bash
++cd rsl_rl
++pip install -e .
++```
++Then
++```bash
++export PYTHONPATH=/workspace/orbit/rsl_rl
++```
++To check if it works: ```bash echo $PYTHONPATH```
+\ No newline at end of file
+diff --git a/core.4963 b/core.4963
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/rsl_rl b/rsl_rl
+--- a/rsl_rl
++++ b/rsl_rl
+@@ -1 +1 @@
+-Subproject commit 0f5dc984599ef88f6028e80282a88f1001912de0
++Subproject commit 0f5dc984599ef88f6028e80282a88f1001912de0-dirty
+diff --git a/source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/mdp/actions/ackermann_actions.py b/source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/mdp/actions/ackermann_actions.py
+index b71d62e..d43d5ee 100644
+--- a/source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/mdp/actions/ackermann_actions.py
++++ b/source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/mdp/actions/ackermann_actions.py
+@@ -105,7 +105,7 @@ class AckermannAction(ActionTerm):
+         self._raw_actions[:] = torch.tanh(actions) # Normalize the actions to [-1, 1]
+         
+         self._processed_actions = self.raw_actions * self._scale + self._offset # Scale and offset the actions
+-        print("Processed actions: ", self._processed_actions)
++        # print("Processed actions: ", self._processed_actions)
+             
+     def apply_actions(self):
+ 
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+index 34aa55c..7b3b363 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+@@ -20,8 +20,8 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
+ @configclass
+ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
+     num_steps_per_env = 24
+-    max_iterations = 200
+-    save_interval = 10
++    max_iterations = 2
++    save_interval = 1
+     experiment_name = "f1tenth"
+     empirical_normalization = False
+     device = "cuda:0"
+@@ -40,6 +40,10 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
+         rnn_type="lstm",
+         rnn_hidden_size=256,
+         rnn_num_layers=1,
++        attention=False,
++        attention_type=None,
++        attention_dims=[256, 256, 256],
++        attention_heads=4,
+     )
+         
+         
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py
+index 1eb63c8..980b102 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py
+@@ -56,37 +56,19 @@ class RslRlActorCriticRecurrentCfg:
+     
+     rnn_num_layers: int = 1
+     """The number of RNN layers."""
+-    
+-    
+-
+-@configclass
+-class RslRlActorCriticRecurrentCfg:
+-    """Configuration for the recurrent PPO actor-critic networks."""
+-
+-    class_name: str = "ActorCriticRecurrent"
+-    """The policy class name. Defaults to ActorCriticRecurrent."""
+-
+-    init_noise_std: float = MISSING
+-    """The initial noise standard deviation for the policy."""
+-
+-    actor_hidden_dims: list[int] = MISSING
+-    """The hidden dimensions of the actor network."""
+-
+-    critic_hidden_dims: list[int] = MISSING
+-    """The hidden dimensions of the critic network."""
+-
+-    activation: str = MISSING
+-    """The activation function for the actor and critic networks."""
+ 
+-    rnn_type: str = "lstm"
+-    """The type of RNN to use ('lstm' or 'gru')."""
++    attention: bool = False
++    """Whether to use attention."""
+ 
+-    rnn_hidden_size: int = 256
+-    """The hidden state size of the RNN layer."""
++    attention_type: str = "dot"
++    """The attention type ('dot', 'general', or 'concat')."""
+ 
+-    rnn_num_layers: int = 1
+-    """The number of RNN layers."""
++    attention_dims: list[int] = MISSING
++    """Query, key, and value dimensions for attention."""
+ 
++    attention_heads: int = MISSING
++    """The number of attention heads."""
++    
+ 
+ @configclass
+ class RslRlPpoAlgorithmCfg:

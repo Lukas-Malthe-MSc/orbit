@@ -1,0 +1,19 @@
+--- git status ---
+On branch attention
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	deleted:    core.4963
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	logs/rsl_rl/f1tenth/2024-04-15_07-58-13/
+	logs/rsl_rl/f1tenth/2024-04-15_10-31-34/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/core.4963 b/core.4963
+deleted file mode 100644
+index e69de29..0000000

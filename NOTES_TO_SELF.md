@@ -60,3 +60,24 @@ This step ensures that the `ssh` command is available in your container, facilit
 
 - These instructions assume you have the necessary permissions within the container to install new packages. You may need to prepend `sudo` to the commands if you're not operating as the root user.
 - Be sure to verify the path to the Isaac Sim directory and the location of the configuration file, as these may vary based on your specific installation and version of Isaac Sim.
+
+### bashrc
+To train, add this:
+```bash
+train() {
+    ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs $1
+}
+```  
+to ```~/.bashrc```. It is run as ```train 2048```for 2048 envs and so on.
+
+### rsl_rl
+To get our fork working first:
+```bash
+cd rsl_rl
+pip install -e .
+```
+Then
+```bash
+export PYTHONPATH=/workspace/orbit/rsl_rl
+```
+To check if it works: ```bash echo $PYTHONPATH```

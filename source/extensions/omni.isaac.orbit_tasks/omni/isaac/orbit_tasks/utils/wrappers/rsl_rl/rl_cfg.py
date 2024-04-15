@@ -56,37 +56,19 @@ class RslRlActorCriticRecurrentCfg:
     
     rnn_num_layers: int = 1
     """The number of RNN layers."""
+
+    attention: bool = False
+    """Whether to use attention."""
+
+    attention_type: str = "dot"
+    """The attention type ('dot', 'general', or 'concat')."""
+
+    attention_dims: list[int] = MISSING
+    """Query, key, and value dimensions for attention."""
+
+    attention_heads: int = MISSING
+    """The number of attention heads."""
     
-    
-
-@configclass
-class RslRlActorCriticRecurrentCfg:
-    """Configuration for the recurrent PPO actor-critic networks."""
-
-    class_name: str = "ActorCriticRecurrent"
-    """The policy class name. Defaults to ActorCriticRecurrent."""
-
-    init_noise_std: float = MISSING
-    """The initial noise standard deviation for the policy."""
-
-    actor_hidden_dims: list[int] = MISSING
-    """The hidden dimensions of the actor network."""
-
-    critic_hidden_dims: list[int] = MISSING
-    """The hidden dimensions of the critic network."""
-
-    activation: str = MISSING
-    """The activation function for the actor and critic networks."""
-
-    rnn_type: str = "lstm"
-    """The type of RNN to use ('lstm' or 'gru')."""
-
-    rnn_hidden_size: int = 256
-    """The hidden state size of the RNN layer."""
-
-    rnn_num_layers: int = 1
-    """The number of RNN layers."""
-
 
 @configclass
 class RslRlPpoAlgorithmCfg:

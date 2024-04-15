@@ -20,8 +20,8 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 200
-    save_interval = 10
+    max_iterations = 2
+    save_interval = 1
     experiment_name = "f1tenth"
     empirical_normalization = False
     device = "cuda:0"
@@ -40,6 +40,10 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         rnn_type="lstm",
         rnn_hidden_size=256,
         rnn_num_layers=1,
+        attention=False,
+        attention_type=None,
+        attention_dims=[256, 256, 256],
+        attention_heads=4,
     )
         
         
