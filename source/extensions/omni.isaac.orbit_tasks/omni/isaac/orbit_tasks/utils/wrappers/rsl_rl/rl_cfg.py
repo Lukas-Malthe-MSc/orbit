@@ -58,34 +58,33 @@ class RslRlActorCriticRecurrentCfg:
     """The number of RNN layers."""
     
     
-
 @configclass
-class RslRlActorCriticRecurrentCfg:
-    """Configuration for the recurrent PPO actor-critic networks."""
-
-    class_name: str = "ActorCriticRecurrent"
-    """The policy class name. Defaults to ActorCriticRecurrent."""
-
+class RslRlActorCriticTransformerCfg:
+    """Configuration for the transformer PPO actor-critic networks."""
+    
+    class_name: str = "ActorCriticTransformer"
+    """The policy class name. Defaults to ActorCriticTransformer."""
+    
     init_noise_std: float = MISSING
     """The initial noise standard deviation for the policy."""
-
+    
     actor_hidden_dims: list[int] = MISSING
     """The hidden dimensions of the actor network."""
-
+    
     critic_hidden_dims: list[int] = MISSING
     """The hidden dimensions of the critic network."""
-
+    
     activation: str = MISSING
     """The activation function for the actor and critic networks."""
-
-    rnn_type: str = "lstm"
-    """The type of RNN to use ('lstm' or 'gru')."""
-
-    rnn_hidden_size: int = 256
-    """The hidden state size of the RNN layer."""
-
-    rnn_num_layers: int = 1
-    """The number of RNN layers."""
+    
+    num_heads: int = 4
+    """The number of attention heads."""
+    
+    transformer_layers: int = 2
+    """The number of transformer layers."""
+    
+    transformer_dim: int = 256
+    """The hidden dimension of the transformer."""
 
 
 @configclass
@@ -151,7 +150,7 @@ class RslRlOnPolicyRunnerCfg:
     empirical_normalization: bool = MISSING
     """Whether to use empirical normalization."""
 
-    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg = MISSING
+    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg | RslRlActorCriticRecurrentAttentionCfg | RslRlActorCriticTransformerCfg= MISSING
     """The policy configuration."""
 
     algorithm: RslRlPpoAlgorithmCfg = MISSING

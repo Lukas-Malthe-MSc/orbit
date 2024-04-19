@@ -21,43 +21,30 @@ from omni.isaac.orbit.scene import InteractiveSceneCfg
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from omni.isaac.orbit.utils.noise import AdditiveGaussianNoiseCfg as Gnoise
-
+from omni.isaac.orbit.terrains import TerrainImporterCfg
 import omni.isaac.orbit_tasks.f1tenth.mdp as mdp
-
+from omni.isaac.orbit.managers import CurriculumTermCfg as CurrTerm
 ##
 # Pre-defined configs
 ##
 from omni.isaac.orbit_assets.f1tenth import F1TENTH_CFG  # isort:skip
-
-import random
+from omni.isaac.orbit.terrains.config.cones import CONE_TERRAINS_CFG  # isort: skip
 ##
 # Scene definition
 ##
 
 from pathlib import Path
 
-current_working_directory = Path.cwd()
+current_working_directory = Path.cwd()                                                                                              
 
 """
 Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-12_11-31-44 --checkpoint model_199.pt
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-18_15-45-37 --checkpoint model_20.pt
 
 """
-
-
-
-
-def random_spawn_position():
-    # Define boundaries for random spawn locations
-    x_min, x_max = -5.0, 5.0  # Adjust these values to your requirements
-    y_min, y_max = -5.0, 5.0  # Adjust these values to your requirements
-    z_pos = 2.0  # Assuming you want to keep the Z position fixed
-    x = random.uniform(x_min, x_max)
-    y = random.uniform(y_min, y_max)
-    return (x, y, z_pos)
 
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
@@ -67,9 +54,9 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     ground = AssetBaseCfg(
         prim_path="/World/ground",
         spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0),
-                                       color=(0.5, 0.5, 0.5)),
-        
+                                       color=(0.5, 0.5, 0.5)),   
     )
+    
     # lights
     dome_light = AssetBaseCfg(
         prim_path="/World/DomeLight",
@@ -81,30 +68,16 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(rot=(0.738, 0.477, 0.477, 0.0)),
     )
     
-    # target = AssetBaseCfg(
-    #     prim_path="{ENV_REGEX_NS}/target",
-    #     spawn=sim_utils.SphereCfg(radius=0.1),
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=(5.0, 4.0, 0.0),rot=(0.0, 0.0, 0.0, 0.0)),
-    # )
-
-    cone1: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/cone1",
-        spawn=sim_utils.ConeCfg(radius=0.15, height=0.5, 
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=random_spawn_position(),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-
-    # obstacle2 = RigidObjectCfg(
-    #     prim_path="{ENV_REGEX_NS}/obstacle2",
+    
+    # cone1: RigidObjectCfg = RigidObjectCfg(
+    #     prim_path="{ENV_REGEX_NS}/cone1",
     #     spawn=sim_utils.ConeCfg(radius=0.15, height=0.5, 
     #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
     #                             collision_props=sim_utils.CollisionPropertiesCfg()),
     #     init_state=RigidObjectCfg.InitialStateCfg(pos=random_spawn_position(),
     #                                             rot=(1.0, 0.0, 0.0, 0.0)),
     # )
-    
+
     
     # f1tenth
     robot: ArticulationCfg = F1TENTH_CFG.replace(prim_path="{ENV_REGEX_NS}/f1tenth")
@@ -118,18 +91,18 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         horizontal_fov=270.0,  # Horizontal field of view of 270 degrees
         horizontal_resolution=0.2497,  # Horizontal resolution of 0.5 degrees
         max_range=30.0,  # Maximum range of 30 meters
-        min_range=None,  # Minimum range of 0.1 meters
+        min_range=0.02,  # Minimum range of 0.1 meters
         rotation_rate=0.0,  # Rotation rate of 0.0 radians per second
-        offset=LidarCfg.OffsetCfg(
-            pos=(0.11749, 0.0, 0.1),  # Example position offset from the robot base
+        # offset=LidarCfg.OffsetCfg(
+        #     pos=(0.11749, 0.0, 0.1),  # Example position offset from the robot base
             
-            rot=(1.0, 0.0, 0.0, 0.0),  # Example rotation offset; no rotation in this case
-            convention="ros"  # Frame convention
-        ),
-        draw_lines=False,
+        #     rot=(1.0, 0.0, 0.0, 0.0),  # Example rotation offset; no rotation in this case
+        #     convention="ros"  # Frame convention
+        # ),
+        draw_lines=True,
         draw_points=False,
     )
-    
+
     race_track = AssetBaseCfg( 
         prim_path="{ENV_REGEX_NS}/RaceTrack",
         collision_group=-1,
@@ -140,6 +113,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
             scale=(.015, .015, .015),
         )
     )
+
 
 ##
 # MDP settings
@@ -161,7 +135,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, scale=(3.0, torch.pi/4), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, scale=(2.5, torch.pi/4), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -200,7 +174,7 @@ class RandomizationCfg:
             "pose_range": {
                 "x": (1.0, 1.0),  # X position range from -5 to 5
                 "y": (0.0, 0.0),  # Y position range from -5 to 5
-                "z": (0.0, 0.2),   # Z position range from 0 to 2 (assuming starting on the ground)
+                "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
                 "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
@@ -216,13 +190,6 @@ class RandomizationCfg:
         },
     )
     
-    # randomize_obstacle1 = RandTerm(
-    #     func=mdp.randomize_obstacle_position,
-    #     mode="interval",
-    #     interval_range_s=(0.0, 1.0),
-    #     params={"asset_cfg": SceneEntityCfg("cone1")}
-    # )
-    
 
 
 @configclass
@@ -236,20 +203,20 @@ class RewardsCfg:
     
     # -- Task: Drive forward
     forward_velocity_reward = RewTerm(func=mdp.forward_velocity, weight=1.0)
-    # distance_traveled_reward = RewTerm(func=mdp.distance_traveled_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
+    distance_traveled_reward = RewTerm(func=mdp.distance_traveled_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
     # speed_scaled_distance_reward = RewTerm(func=mdp.speed_scaled_distance_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
     
     # -- Penalty
     steering_angle_position = RewTerm(
         func=mdp.joint_pos_target_l2,
-        weight=-0.05,
+        weight=-0.1,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
     )
     
     # -- Penalty
     min_lidar_distance = RewTerm(
         func=mdp.lidar_min_distance,
-        weight=-0.01,
+        weight=-0.1,
         params={"sensor_cfg": SceneEntityCfg("lidar")})
     
 @configclass
@@ -276,6 +243,7 @@ class TerminationsCfg:
 class CurriculumCfg:
     """Configuration for the curriculum."""
 
+    # terrain_levels = CurrTerm(func=mdp.terrain_levels_vel)
     pass
 
 ##
@@ -310,5 +278,4 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings
         self.sim.dt = 1 / 40  # 120
-
-
+        

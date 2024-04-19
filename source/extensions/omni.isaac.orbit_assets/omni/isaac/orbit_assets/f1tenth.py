@@ -21,8 +21,8 @@ F1TENTH_PROJECT_DIR = current_working_directory
 
 F1TENTH_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"{F1TENTH_PROJECT_DIR}/f1tenth_assets/omniverse/robot/instanceable/f1tenth.usd",
-        # usd_path=f"{F1TENTH_PROJECT_DIR}/robot/instanceable/f1tenth.usd",
+        # usd_path=f"{F1TENTH_PROJECT_DIR}/f1tenth_assets/omniverse/robot/instanceable/f1tenth.usd",
+        usd_path=f"{F1TENTH_PROJECT_DIR}/robot/instanceable/f1tenth.usd",
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.5)
