@@ -26,6 +26,33 @@ def lidar_ranges(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     # print(f", num_sensors: {lidar_ranges.shape}")
     return lidar_ranges
 
+def lidar_ranges_normalized(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Return normalized lidar ranges with Gaussian noise."""
+    # Extract the lidar sensor from the scene
+    sensor: Lidar = env.scene.sensors[sensor_cfg.name]
+    lidar_ranges = sensor.data.output  # Original lidar ranges
+
+    # Get the min and max range from the sensor configuration
+    min_range = sensor.cfg.min_range  # Minimum possible range
+    max_range = sensor.cfg.max_range  # Maximum possible range
+
+    # Normalize the lidar data
+    lidar_ranges_normalized = (lidar_ranges - min_range) / (max_range - min_range)
+
+    # Generate Gaussian noise with the same shape as the lidar data
+    mean = 0.0  # Mean of the Gaussian distribution
+    std = 0.1  # Standard deviation of the Gaussian distribution
+    gaussian_noise = torch.normal(mean=mean, std=std, size=lidar_ranges_normalized.shape, device=lidar_ranges_normalized.device)
+
+    # Apply noise to the normalized lidar data
+    lidar_ranges_normalized_noisy = lidar_ranges_normalized + gaussian_noise
+
+    # Clip values to maintain the [0, 1] range
+    lidar_ranges_normalized_noisy = torch.clip(lidar_ranges_normalized_noisy, 0.0, 1.0)
+
+    return lidar_ranges_normalized_noisy
+
+
 
 def base_pos(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root position in the simulation world frame."""

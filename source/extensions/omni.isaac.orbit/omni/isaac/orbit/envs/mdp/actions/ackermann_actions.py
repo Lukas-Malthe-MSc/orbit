@@ -103,9 +103,7 @@ class AckermannAction(ActionTerm):
     def process_actions(self, actions):
         # store the raw actions
         self._raw_actions[:] = torch.tanh(actions) # Normalize the actions to [-1, 1]
-        
         self._processed_actions = self.raw_actions * self._scale + self._offset # Scale and offset the actions
-        print("Processed actions: ", self._processed_actions)
             
     def apply_actions(self):
 

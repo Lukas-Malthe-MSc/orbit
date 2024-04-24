@@ -31,8 +31,7 @@ def joint_pos_target_l2(env: RLTaskEnv, target: float, asset_cfg: SceneEntityCfg
     # print(f"joint_pos_target_l2: {torch.sum(torch.square(joint_pos - target), dim=1)}")
     return torch.sum(torch.square(joint_pos - target), dim=1)
 
-def forward_velocity(
-    env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+def forward_velocity(env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root linear velocity in the asset's root frame."""
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
@@ -79,7 +78,11 @@ def lidar_min_distance(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tens
     return 1/min_distances
 
 
-def passed_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
+def passed_starting_location(
+                            env:            RLTaskEnv, 
+                            asset_cfg:      SceneEntityCfg, 
+                            threshold:      float, 
+                            ) -> torch.Tensor:
     """Checks if assets have passed their starting locations within some threshold."""
     # Access the asset
     asset: Articulation = env.scene[asset_cfg.name]
@@ -94,12 +97,12 @@ def passed_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshol
     # Retrieve the starting positions
     starting_positions = env.starting_positions[asset_cfg.name]
     
-    print(f"starting_positions: {starting_positions}")
+    # print(f"starting_positions: {starting_positions}")
     
     # Compute the difference in positions
     position_differences = asset.data.root_pos_w[:, :2] - starting_positions
     
-    print(f"position_differences: {position_differences}")
+    # print(f"position_differences: {position_differences}")
     
     # Calculate the distance moved from the starting positions
     distance_moved = torch.norm(position_differences, dim=1)
@@ -108,42 +111,14 @@ def passed_starting_location(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshol
     passed_threshold = distance_moved > threshold
     # print(f"passed_starting_location: {passed_threshold}")
     return passed_threshold
-    
-
-def update_pass_counters(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
-    """Updates counters for each asset based on whether they've passed their starting location."""
-    asset: Articulation = env.scene[asset_cfg.name]
-
-    # Ensure we have starting positions
-    if asset_cfg.name not in env.starting_positions:
-        env.starting_positions[asset_cfg.name] = asset.data.root_pos_w[:, :2].clone()
-        env.pass_counters[asset_cfg.name] = torch.zeros(asset.data.root_pos_w.shape[0], dtype=torch.int64, device=asset.device)
-
-    # Retrieve starting positions and pass counters
-    starting_positions = env.starting_positions[asset_cfg.name]
-    pass_counters = env.pass_counters[asset_cfg.name]
-
-    # Compute the difference in positions from the starting point
-    position_differences = asset.data.root_pos_w[:, :2] - starting_positions
-    
-    # Calculate the distance moved from the starting positions
-    distance_moved = torch.norm(position_differences, dim=1)
-    
-    # Identify assets that have moved beyond the threshold
-    passed_threshold = distance_moved > threshold
-
-    # Update the pass counters for assets that have passed the threshold
-    # This simplistic approach increments the counter every time the asset is beyond the threshold
-    # A more sophisticated approach might track entering and exiting the threshold region
-    pass_counters += passed_threshold.int()
-
-    # Save the updated pass counters back to the dictionary
-    env.pass_counters[asset_cfg.name] = pass_counters
-
-    return pass_counters
 
 
-def timed_lap_time(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) -> torch.Tensor:
+def timed_lap_time(
+                    env:            RLTaskEnv, 
+                    asset_cfg:      SceneEntityCfg, 
+                    threshold:      float, 
+                    lap_threshold:  float = 5.0
+                    ) -> torch.Tensor:
     """Checks if assets are within their starting locations +- a threshold and prints time elapsed since leaving and returning for each asset."""
     # Access the asset
     asset: Articulation = env.scene[asset_cfg.name]
@@ -154,8 +129,9 @@ def timed_lap_time(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) 
     if asset_cfg.name not in env.starting_positions: #any(env.termination_manager.time_outs)
         env.starting_positions[asset_cfg.name] = {
             "position": asset.data.root_pos_w[:, :2].clone(),
-            "left_at_step": torch.full((num_assets,), -1, dtype=torch.int64),  # -1 indicates that the asset hasn't left yet
-            "returned_at_step": torch.full((num_assets,), -1, dtype=torch.int64)  # Step counter when the asset last returned within the threshold
+            "left_at_step": torch.full((num_assets,), -1, dtype=torch.int64),       # -1 indicates that the asset hasn't left yet
+            "returned_at_step": torch.full((num_assets,), -1, dtype=torch.int64),   # Step counter when the asset last returned within the threshold
+            "is_lap_completed": torch.full((num_assets,), -1, dtype=torch.int64)    # -1 indicates that a lap is not "completable"
         }
 
     tracking_info = env.starting_positions[asset_cfg.name]
@@ -168,12 +144,17 @@ def timed_lap_time(env: RLTaskEnv, asset_cfg: SceneEntityCfg, threshold: float) 
     within_threshold = distance_moved <= threshold
 
     for i in range(num_assets):
-        if within_threshold[i] and tracking_info["left_at_step"][i] >= 0:
+        if tracking_info["is_lap_completed"][i] == -1 and distance_moved[i] > lap_threshold:
+            tracking_info["is_lap_completed"][i] = 1
+            # print(f"Car {i} has left limit")
+
+        if within_threshold[i] and tracking_info["left_at_step"][i] >= 0 and tracking_info["is_lap_completed"][i]:
             # Calculate and print the elapsed time for assets that have returned
             tracking_info["returned_at_step"][i] = env.common_step_counter
             time_elapsed = (tracking_info["returned_at_step"][i] - tracking_info["left_at_step"][i]) * env.step_dt
-            print(f"Asset {i}: Time elapsed since leaving and returning: {time_elapsed} seconds")
+            # print(f"Asset {i}: Time elapsed since leaving and returning: {time_elapsed} seconds")
             tracking_info["left_at_step"][i] = -1  # Reset after calculating time
+            tracking_info["is_lap_completed"][i] = -1
 
         elif not within_threshold[i] and tracking_info["left_at_step"][i] < 0:
             # Mark the step counter for assets that just left the threshold

@@ -21,7 +21,7 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 200
+    max_iterations = 50
     save_interval = 10
     experiment_name = "f1tenth"
     empirical_normalization = False
@@ -33,25 +33,25 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     #     activation="elu",
     # )
     
-    # policy = RslRlActorCriticRecurrentCfg(
-    #     init_noise_std=1.0,
-    #     actor_hidden_dims=[512, 256, 128],
-    #     critic_hidden_dims=[512, 256, 128],
-    #     activation="elu",
-    #     rnn_type="lstm",
-    #     rnn_hidden_size=256,
-    #     rnn_num_layers=3,
-    # )
-        
-    policy = RslRlActorCriticTransformerCfg(
-        actor_hidden_dims=[256, 128],
-        critic_hidden_dims=[256, 128],
-        activation="elu",
+    policy = RslRlActorCriticRecurrentCfg(
         init_noise_std=1.0,
-        num_heads=4,
-        transformer_layers=2,
-        transformer_dim=512
+        actor_hidden_dims=[512, 256, 128],
+        critic_hidden_dims=[512, 256, 128],
+        activation="elu",
+        rnn_type="lstm",
+        rnn_hidden_size=512,
+        rnn_num_layers=1,
     )
+        
+    # policy = RslRlActorCriticTransformerCfg(
+    #     actor_hidden_dims=[256, 128],
+    #     critic_hidden_dims=[256, 128],
+    #     activation="elu",
+    #     init_noise_std=1.0,
+    #     num_heads=4,
+    #     transformer_layers=2,
+    #     transformer_dim=512
+    # )
         
     algorithm = RslRlPpoAlgorithmCfg(
         value_loss_coef=1.0,
