@@ -12,17 +12,56 @@ if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
 
 
+
+
 def lidar_distance_limit(env: RLTaskEnv, distance_threshold, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Terminate when the asset's joint velocities are outside of the soft joint limits."""
     """The ranges from the given lidar sensor."""
     # extract the used quantities (to enable type-hinting)
     sensor: Lidar = env.scene[sensor_cfg.name]
     lidar_ranges = sensor.data.output
-    # print(sensor.)
-    # if torch.any(lidar_ranges < distance_threshold, dim=1):
-    #     print("TERMINATING!!!")
-    return torch.any(lidar_ranges < distance_threshold, dim=1)
 
+    if env.collision_beams is None:
+        env.collision_beams = get_scale_vector()
+        env.collision_beams = env.collision_beams.to(lidar_ranges.device)
+        print("AYYYYYYY")
+
+    below_limit = lidar_ranges < env.collision_beams
+    
+    result = torch.any(below_limit, dim=1)
+    return result
+
+    # return torch.any(lidar_ranges < distance_threshold, dim=1)
+
+
+# def get_scale_vector(env: RLTaskEnv,
+#                      width: float, 
+#                      length: float, 
+#                      num_beams: int, 
+#                      fov: float
+#                      ):
+def get_scale_vector(width=0.145, length=0.18, num_beams=1081, fov=1.5*torch.pi):
+    # Rotate beams
+    shift = -(2*torch.pi - fov) / 2
+    angles = torch.linspace(shift, fov + shift, steps=num_beams)
+
+    # Angle to the corner of the car
+    # angle_radians = torch.atan2(length, width)
+    angle_radians = torch.atan2(torch.tensor(length), torch.tensor(width))
+
+    scaled_vec = []
+
+    for theta in angles:
+        if abs(theta) > angle_radians and abs(theta) < torch.pi - angle_radians:
+            # Beam points to the front of the car
+            scale = length * torch.sqrt(1 + (torch.cos(theta) / torch.sin(theta))**2)
+        else:
+            # Beam points to the side or rear of the car
+            scale = width * torch.sqrt(1 + (torch.sin(theta) / torch.cos(theta))**2)
+
+        scaled_vec.append(scale)
+
+    return torch.tensor(scaled_vec)
 
 def flipped_over(
     env: RLTaskEnv,
@@ -53,3 +92,7 @@ def flipped_over(
 
     # Return tensor indicating which environments contain flipped robots
     return is_flipped
+
+
+
+

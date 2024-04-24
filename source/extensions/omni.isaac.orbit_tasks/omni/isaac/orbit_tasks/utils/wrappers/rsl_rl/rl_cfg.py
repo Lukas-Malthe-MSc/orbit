@@ -85,6 +85,56 @@ class RslRlActorCriticTransformerCfg:
     
     transformer_dim: int = 256
     """The hidden dimension of the transformer."""
+    
+@configclass
+class RslRlActorCriticSelfAttentionCfg:
+    """Configuration for the self-attention PPO actor-critic networks."""
+    
+    class_name: str = "ActorCriticSelfAttention"
+    """The policy class name. Defaults to ActorCriticSelfAttention."""
+    
+    init_noise_std: float = MISSING
+    """The initial noise standard deviation for the policy."""
+    
+    actor_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the actor network."""
+    
+    critic_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the critic network."""
+    
+    activation: str = MISSING
+    """The activation function for the actor and critic networks."""
+    
+    attention_size: int = 512
+    """The hidden size of the attention layer."""
+    
+@configclass
+class RslRlActorCriticLidarCnnCfg:
+    """Configuration for the Lidar CNN PPO actor-critic networks."""
+    
+    class_name: str = "ActorCriticLidarCnn"
+    """The policy class name. Defaults to ActorCriticLidarCnn."""
+    
+    init_noise_std: float = MISSING
+    """The initial noise standard deviation for the policy."""
+    
+    actor_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the actor network."""
+    
+    critic_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the critic network."""
+    
+    activation: str = MISSING
+    """The activation function for the actor and critic networks."""
+    
+    num_lidar_scans: int = 1081
+    """The number of lidar scans."""
+    
+    kernel_size: int = 3
+    """The kernel size for the CNN."""
+    
+    out_channels: int = 32
+    """The number of output channels for the CNN."""
 
 
 @configclass
@@ -150,7 +200,7 @@ class RslRlOnPolicyRunnerCfg:
     empirical_normalization: bool = MISSING
     """Whether to use empirical normalization."""
 
-    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg | RslRlActorCriticRecurrentAttentionCfg | RslRlActorCriticTransformerCfg= MISSING
+    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg | RslRlActorCriticLidarCnnCfg | RslRlActorCriticSelfAttentionCfg | RslRlActorCriticTransformerCfg= MISSING
     """The policy configuration."""
 
     algorithm: RslRlPpoAlgorithmCfg = MISSING
