@@ -56,6 +56,7 @@ class RigidObject(AssetBase):
             cfg: A configuration instance.
         """
         super().__init__(cfg)
+
         # container for data access
         self._data = RigidObjectData()
 

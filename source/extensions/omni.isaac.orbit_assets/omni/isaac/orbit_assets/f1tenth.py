@@ -16,12 +16,13 @@ from pathlib import Path
 
 current_working_directory = Path.cwd()
 
-# F1TNEHT_PROJET_DIR = "omniverse://localhost/Projects/f1tenth"
+# F1TENTH_PROJECT_DIR = "omniverse://localhost/Projects/f1tenth"
 F1TENTH_PROJECT_DIR = current_working_directory
 
 F1TENTH_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
         usd_path=f"{F1TENTH_PROJECT_DIR}/f1tenth_assets/omniverse/robot/instanceable/f1tenth.usd",
+        # usd_path=f"{F1TENTH_PROJECT_DIR}/robot/instanceable/f1tenth.usd",
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.5)
@@ -29,17 +30,17 @@ F1TENTH_CFG = ArticulationCfg(
     actuators={
         "wheels": ImplicitActuatorCfg(
             joint_names_expr=['wheel_.*'],
-            effort_limit=50,  # Newton meters
-            velocity_limit=25,  # radians per second
-            stiffness=1000,  # N/m
-            damping=50  # Ns/m
+            effort_limit=None, #50,
+            velocity_limit=None, #25,
+            stiffness=None, #1000,
+            damping=None#175
         ),
         "rotators": ImplicitActuatorCfg(
             joint_names_expr=["rotator_.*"],
-            effort_limit=5,  # Newton meters
-            velocity_limit=5,  # radians per second
-            stiffness=500,  # N/m, assuming a need for precise control
-            damping=50  # Ns/m
+            effort_limit=None,
+            velocity_limit=None,
+            stiffness=None, # 0,
+            damping=None, #175
         ),
     },
 )

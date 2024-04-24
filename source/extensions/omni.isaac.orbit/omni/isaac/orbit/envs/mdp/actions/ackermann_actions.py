@@ -79,8 +79,6 @@ class AckermannAction(ActionTerm):
         self.base_length = torch.tensor(cfg.base_length, device=self.device)
         self.base_width = torch.tensor(cfg.base_width, device=self.device)
         self.wheel_rad = torch.tensor(cfg.wheel_radius, device=self.device)
-        self.max_speed = torch.tensor(cfg.max_speed, device=self.device)
-        self.max_steering_angle = torch.tensor(cfg.max_steering_angle, device=self.device)
 
     """
     Properties.
@@ -102,19 +100,11 @@ class AckermannAction(ActionTerm):
     Operations.
     """
 
-
-
     def process_actions(self, actions):
         # store the raw actions
-        # actions[:, 0] = torch.clamp(actions[:, 0], min=2., max=2.)
-        # actions[:, 1] = torch.clamp(actions[:, 1], min=0.1, max=0.1)
-        
-        self._raw_actions[:] = actions
-        
-        self._processed_actions = self.raw_actions * self._scale + self._offset
-        self._processed_actions[:, 0] = torch.clamp(self._processed_actions[:, 0], min=-self.max_speed, max=self.max_speed)
-        self._processed_actions[:, 1] = torch.clamp(self._processed_actions[:, 1], min=-self.max_steering_angle, max=self.max_steering_angle)
-
+        self._raw_actions[:] = torch.tanh(actions) # Normalize the actions to [-1, 1]
+        self._processed_actions = self.raw_actions * self._scale + self._offset # Scale and offset the actions
+            
     def apply_actions(self):
 
         left_rotator_angle, right_rotator_angle, wheel_speeds = self. calculate_ackermann_angles_and_velocities(
@@ -122,9 +112,6 @@ class AckermannAction(ActionTerm):
             target_steering_angle_rad=self.processed_actions[:, 1] # Steering angle for all cars
         )
         wheel_angles = torch.stack([left_rotator_angle, right_rotator_angle], dim=1)
-
-        # wheel_angles = torch.zeros(wheel_speeds.shape[0], 2, device=self.device)
-        # wheel_speeds = torch.ones(wheel_speeds.shape[0], 4, device=self.device)
 
         self._asset.set_joint_velocity_target(wheel_speeds, joint_ids=self._wheel_ids)
         self._asset.set_joint_position_target(wheel_angles, joint_ids=self._steering_ids)
@@ -156,10 +143,17 @@ class AckermannAction(ActionTerm):
         v_front_left = target_velocity * (R - W/2) / R
         v_front_right = target_velocity * (R + W/2) / R
         
-        v_back_left = target_velocity * R_rear_left / R
-        v_back_right = target_velocity * R_rear_right / R
+        v_back_left = target_velocity * R_rear_left / torch.abs(R)
+        v_back_right = target_velocity * R_rear_right / torch.abs(R)
         
         # Calculate target rotation for each wheel based on its velocity
-        wheel_speeds = torch.stack([v_front_left, v_front_right, v_back_left, v_back_right], dim=1) / wheel_radius
+        wheel_speeds = torch.stack([v_back_left, v_back_right, v_front_left, v_front_right], dim=1) / wheel_radius
         
         return delta_left, delta_right, wheel_speeds
+
+            
+
+        
+        
+        
+

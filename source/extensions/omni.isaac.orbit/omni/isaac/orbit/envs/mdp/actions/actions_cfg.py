@@ -256,11 +256,6 @@ class AckermannActionCfg(ActionTermCfg):
     wheel_radius: float = 1.0
     """The radius of the vehicle's wheels. Defaults to 1.0."""
     
-    max_speed: float = 1.0
-    """The maximum speed of the vehicle in m/s. Defaults to 1.0."""
-    
-    max_steering_angle: float = 0.5
-    """The maximum steering angle of the vehicle in radians. Defaults to 0.5."""
     
     
 

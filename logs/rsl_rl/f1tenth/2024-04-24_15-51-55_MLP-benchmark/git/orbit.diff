@@ -1,0 +1,314 @@
+--- git status ---
+HEAD detached from 4742908
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   rsl_rl (modified content, untracked content)
+	modified:   source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/rl_task_env.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/terminations.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/__init__.py
+	modified:   source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	logs/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/rsl_rl b/rsl_rl
+--- a/rsl_rl
++++ b/rsl_rl
+@@ -1 +1 @@
+-Subproject commit 46876a9f602416a0c145eb31dcf25215728edc8b
++Subproject commit 46876a9f602416a0c145eb31dcf25215728edc8b-dirty
+diff --git a/source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/rl_task_env.py b/source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/rl_task_env.py
+index 3393c00..32c9128 100644
+--- a/source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/rl_task_env.py
++++ b/source/extensions/omni.isaac.orbit/omni/isaac/orbit/envs/rl_task_env.py
+@@ -93,6 +93,7 @@ class RLTaskEnv(BaseEnv, gym.Env):
+         self.is_lap_completed = {}
+         self.left_threshold = {}
+         self.maps_is_randomized = False
++        self.collision_beams = None #MISSING
+ 
+         # initialize data and constants
+         # -- counter for curriculum
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+index 3881daa..b7dc992 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/agents/rsl_rl_ppo_cfg.py
+@@ -16,6 +16,8 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
+     RslRlPpoAlgorithmCfg,
+     RslRlActorCriticRecurrentCfg,
+     RslRlActorCriticTransformerCfg,
++    RslRlActorCriticSelfAttentionCfg,
++    RslRlActorCriticLidarCnnCfg,
+ )
+ 
+ @configclass
+@@ -26,22 +28,22 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
+     experiment_name = "f1tenth"
+     empirical_normalization = False
+     device = "cuda:0"
+-    # policy = RslRlPpoActorCriticCfg(
+-    #     init_noise_std=1.0,
+-    #     actor_hidden_dims=[512, 256, 128],
+-    #     critic_hidden_dims=[512, 256, 128],
+-    #     activation="elu",
+-    # )
+-    
+-    policy = RslRlActorCriticRecurrentCfg(
++    policy = RslRlPpoActorCriticCfg(
+         init_noise_std=1.0,
+         actor_hidden_dims=[512, 256, 128],
+         critic_hidden_dims=[512, 256, 128],
+         activation="elu",
+-        rnn_type="lstm",
+-        rnn_hidden_size=512,
+-        rnn_num_layers=1,
+     )
++    
++    # policy = RslRlActorCriticRecurrentCfg(
++    #     init_noise_std=1.0,
++    #     actor_hidden_dims=[512, 256, 128],
++    #     critic_hidden_dims=[512, 256, 128],
++    #     activation="elu",
++    #     rnn_type="lstm",
++    #     rnn_hidden_size=512,
++    #     rnn_num_layers=1,
++    # )
+         
+     # policy = RslRlActorCriticTransformerCfg(
+     #     actor_hidden_dims=[256, 128],
+@@ -52,6 +54,24 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
+     #     transformer_layers=2,
+     #     transformer_dim=512
+     # )
++    
++    # policy = RslRlActorCriticSelfAttentionCfg(
++    #     actor_hidden_dims=[512, 256, 128],
++    #     critic_hidden_dims=[512, 256, 128],
++    #     activation="elu",
++    #     init_noise_std=1.0,
++    #     attention_size=512,
++    # )
++    
++    # policy = RslRlActorCriticLidarCnnCfg(
++    #     actor_hidden_dims=[512, 256, 128],
++    #     critic_hidden_dims=[512, 256, 128],
++    #     activation="elu",
++    #     init_noise_std=1.0,
++    #     num_lidar_scans=1081,
++    #     kernel_size=5,
++    #     out_channels=4,
++    # )
+         
+     algorithm = RslRlPpoAlgorithmCfg(
+         value_loss_coef=1.0,
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+index f9c01b8..773e8ce 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/f1tenth_env_cfg.py
+@@ -42,7 +42,7 @@ Train commmand:
+ $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
+ 
+ Play command:
+-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-24_11-11-10 --checkpoint model_49.pt
++$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-24_15-15-01 --checkpoint model_49.pt
+ 
+ """
+ 
+@@ -249,27 +249,21 @@ class RandomizationCfg:
+     add_base_mass = RandTerm(
+         func=mdp.add_body_mass,
+         mode="startup",
+-        params={"asset_cfg": SceneEntityCfg("robot", body_names="base_link"), "mass_range": (-5.0, 5.0)},
++        params={"asset_cfg": SceneEntityCfg("robot", body_names="base_link"), "mass_range": (-0.5, 5.0)},
+     )
+     
+-    randomize_map = RandTerm(
+-        func=mdp.randomize_map,
+-        mode="startup",
+-        params={
+-            "asset_cfg": SceneEntityCfg("robot"),
+-            "maps_paths": [f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
+-                           f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_2.usd",
+-                           f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_3.usd",
+-                           f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_4.usd",
+-                           f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_5.usd"],
+-            },
+-            # "maps_paths": [f"omniverse://localhost/Projects/f1tenth/maps/track_1.usd",
+-            #                f"omniverse://localhost/Projects/f1tenth/maps/track_2.usd",
+-            #                f"omniverse://localhost/Projects/f1tenth/maps/track_3.usd",
+-            #                f"omniverse://localhost/Projects/f1tenth/maps/track_4.usd",
+-            #                f"omniverse://localhost/Projects/f1tenth/maps/track_5.usd"],
+-            # },
+-    )
++    # randomize_map = RandTerm(
++    #     func=mdp.randomize_map,
++    #     mode="startup",
++    #     params={
++    #         "asset_cfg": SceneEntityCfg("robot"),
++    #         "maps_paths": [f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
++    #                        f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_2.usd",
++    #                        f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_3.usd",
++    #                        f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_4.usd",
++    #                        f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_5.usd"],
++    #         },
++    # )
+     
+     physics_material = RandTerm(
+         func=mdp.randomize_rigid_body_material,
+@@ -606,7 +600,13 @@ class TerminationsCfg:
+     
+     is_flipped = DoneTerm(func=mdp.flipped_over, params={"asset_cfg": SceneEntityCfg("robot")})
+     
+-    
++    # is_crash = DoneTerm(func=mdp.get_scale_vector, params={"width": 0.145,
++    #                                                        "length": 0.18,
++    #                                                        "num_beams": 1081,
++    #                                                        "fov": 1.5 * torch.pi
++    #                                                        }
++    #                                                       )
++
+ 
+ 
+ @configclass
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/terminations.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/terminations.py
+index 5a6f421..d02e79c 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/terminations.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/f1tenth/mdp/terminations.py
+@@ -11,6 +11,36 @@ from omni.isaac.orbit.sensors import Lidar
+ if TYPE_CHECKING:
+     from omni.isaac.orbit.envs import RLTaskEnv
+ 
++# def get_scale_vector(env: RLTaskEnv,
++#                      width: float, 
++#                      length: float, 
++#                      num_beams: int, 
++#                      fov: float
++#                      ):
++def get_scale_vector(width=0.145, length=0.18, num_beams=1081, fov=1.5*torch.pi):
++    # Rotate beams
++    shift = -(2*torch.pi - fov) / 2
++    angles = torch.linspace(shift, fov + shift, steps=num_beams)
++
++    # Angle to the corner of the car
++    angle_radians = torch.atan2(length, width)
++
++    scaled_vec = []
++
++    for theta in angles:
++        if abs(theta) > angle_radians and abs(theta) < torch.pi - angle_radians:
++            # Beam points to the front of the car
++            scale = length * torch.sqrt(1 + (torch.cos(theta) / torch.sin(theta))**2)
++        else:
++            # Beam points to the side or rear of the car
++            scale = width * torch.sqrt(1 + (torch.sin(theta) / torch.cos(theta))**2)
++
++        scaled_vec.append(scale)
++
++        env.collision_beams = torch.tensor(scaled_vec)
++
++    return torch.tensor(scaled_vec)
++
+ 
+ def lidar_distance_limit(env: RLTaskEnv, distance_threshold, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+     """Terminate when the asset's joint velocities are outside of the soft joint limits."""
+@@ -52,4 +82,8 @@ def flipped_over(
+     )
+ 
+     # Return tensor indicating which environments contain flipped robots
+-    return is_flipped
+\ No newline at end of file
++    return is_flipped
++
++
++
++
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/__init__.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/__init__.py
+index f61e24b..b8a9f79 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/__init__.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/__init__.py
+@@ -6,5 +6,5 @@
+ """Wrappers and utilities to configure an :class:`RLTaskEnv` for RSL-RL library."""
+ 
+ from .exporter import export_policy_as_jit, export_policy_as_onnx
+-from .rl_cfg import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, RslRlPpoAlgorithmCfg, RslRlActorCriticRecurrentCfg, RslRlActorCriticTransformerCfg
++from .rl_cfg import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, RslRlPpoAlgorithmCfg, RslRlActorCriticRecurrentCfg, RslRlActorCriticTransformerCfg, RslRlActorCriticSelfAttentionCfg, RslRlActorCriticLidarCnnCfg
+ from .vecenv_wrapper import RslRlVecEnvWrapper
+diff --git a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py
+index 0b535f3..7f59a18 100644
+--- a/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py
++++ b/source/extensions/omni.isaac.orbit_tasks/omni/isaac/orbit_tasks/utils/wrappers/rsl_rl/rl_cfg.py
+@@ -85,6 +85,56 @@ class RslRlActorCriticTransformerCfg:
+     
+     transformer_dim: int = 256
+     """The hidden dimension of the transformer."""
++    
++@configclass
++class RslRlActorCriticSelfAttentionCfg:
++    """Configuration for the self-attention PPO actor-critic networks."""
++    
++    class_name: str = "ActorCriticSelfAttention"
++    """The policy class name. Defaults to ActorCriticSelfAttention."""
++    
++    init_noise_std: float = MISSING
++    """The initial noise standard deviation for the policy."""
++    
++    actor_hidden_dims: list[int] = MISSING
++    """The hidden dimensions of the actor network."""
++    
++    critic_hidden_dims: list[int] = MISSING
++    """The hidden dimensions of the critic network."""
++    
++    activation: str = MISSING
++    """The activation function for the actor and critic networks."""
++    
++    attention_size: int = 512
++    """The hidden size of the attention layer."""
++    
++@configclass
++class RslRlActorCriticLidarCnnCfg:
++    """Configuration for the Lidar CNN PPO actor-critic networks."""
++    
++    class_name: str = "ActorCriticLidarCnn"
++    """The policy class name. Defaults to ActorCriticLidarCnn."""
++    
++    init_noise_std: float = MISSING
++    """The initial noise standard deviation for the policy."""
++    
++    actor_hidden_dims: list[int] = MISSING
++    """The hidden dimensions of the actor network."""
++    
++    critic_hidden_dims: list[int] = MISSING
++    """The hidden dimensions of the critic network."""
++    
++    activation: str = MISSING
++    """The activation function for the actor and critic networks."""
++    
++    num_lidar_scans: int = 1081
++    """The number of lidar scans."""
++    
++    kernel_size: int = 3
++    """The kernel size for the CNN."""
++    
++    out_channels: int = 32
++    """The number of output channels for the CNN."""
+ 
+ 
+ @configclass
+@@ -150,7 +200,7 @@ class RslRlOnPolicyRunnerCfg:
+     empirical_normalization: bool = MISSING
+     """Whether to use empirical normalization."""
+ 
+-    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg | RslRlActorCriticRecurrentAttentionCfg | RslRlActorCriticTransformerCfg= MISSING
++    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg | RslRlActorCriticLidarCnnCfg | RslRlActorCriticSelfAttentionCfg | RslRlActorCriticTransformerCfg= MISSING
+     """The policy configuration."""
+ 
+     algorithm: RslRlPpoAlgorithmCfg = MISSING

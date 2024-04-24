@@ -89,6 +89,11 @@ class RLTaskEnv(BaseEnv, gym.Env):
         # initialize the starting positions and pass counters
         self.starting_positions = {}
         self.pass_counters = {}
+        self.custom_data = {}
+        self.is_lap_completed = {}
+        self.left_threshold = {}
+        self.maps_is_randomized = False
+        self.collision_beams = None #MISSING
 
         # initialize data and constants
         # -- counter for curriculum

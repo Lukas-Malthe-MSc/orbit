@@ -1,3 +1,6 @@
 [submodule "f1tenth_assets"]
 	path = f1tenth_assets
 	url = git@github.com:Lukas-Malthe-MSc/f1tenth_assets.git
+[submodule "rsl_rl"]
+	path = rsl_rl
+	url = git@github.com:Lukas-Malthe-MSc/rsl_rl.git

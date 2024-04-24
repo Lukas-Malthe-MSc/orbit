@@ -67,3 +67,9 @@ class LidarCfg(SensorBaseCfg):
     
     vertical_resolution: None | float = None
     """The vertical resolution of the lidar. Defaults to None."""
+
+    draw_lines: None | bool = False
+    """Whether to draw lines to visualize the lidar rays. Defaults to False."""
+    
+    draw_points: None | bool = False
+    """Whether to draw points to visualize the lidar rays. Defaults to False."""
