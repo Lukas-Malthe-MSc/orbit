@@ -135,7 +135,52 @@ class RslRlActorCriticLidarCnnCfg:
     
     out_channels: int = 32
     """The number of output channels for the CNN."""
+    
+@configclass
+class RslRlActorCriticViTCfg:
+    """Configuration for the Vision Transformer PPO actor-critic networks."""
 
+    class_name: str = "ActorCriticViT"
+    """The policy class name. Defaults to ActorCriticViT."""
+    
+    init_noise_std: float = MISSING
+    """The initial noise standard deviation for the policy."""
+    
+    actor_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the actor network."""
+    
+    critic_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the critic network."""
+    
+    activation: str = MISSING
+    """The activation function for the actor and critic networks."""
+    
+    num_heads: int = 4
+    """The number of attention heads."""
+    
+    transformer_layers: int = 2
+    """The number of transformer layers."""
+    
+    transformer_dim: int = 256
+    """The hidden dimension of the transformer."""
+    
+    patch_size: int = 16
+    """The patch size for the transformer."""
+    
+    num_classes: int = 256
+    """The number of patches."""
+    
+    hidden_dim: int = 256
+    """The hidden dimension of the transformer."""
+    
+    depth: int = 2
+    """The depth of the transformer."""
+    
+    mlp_dim: int = 256
+    """The hidden dimension of the MLP."""
+    
+    channels: int = 1
+    """The number of input channels."""    
 
 @configclass
 class RslRlPpoAlgorithmCfg:
@@ -200,7 +245,7 @@ class RslRlOnPolicyRunnerCfg:
     empirical_normalization: bool = MISSING
     """Whether to use empirical normalization."""
 
-    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg | RslRlActorCriticLidarCnnCfg | RslRlActorCriticSelfAttentionCfg | RslRlActorCriticTransformerCfg= MISSING
+    policy: RslRlPpoActorCriticCfg | RslRlActorCriticRecurrentCfg | RslRlActorCriticLidarCnnCfg | RslRlActorCriticSelfAttentionCfg | RslRlActorCriticTransformerCfg | RslRlActorCriticViTCfg = MISSING
     """The policy configuration."""
 
     algorithm: RslRlPpoAlgorithmCfg = MISSING

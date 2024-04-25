@@ -42,7 +42,7 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 16 --load_run 2024-04-24_17-31-43 --checkpoint model_49.pt
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 16 --load_run 2024-04-25_17-45-36 --checkpoint model_49.pt
 
 """
 
@@ -80,16 +80,15 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         horizontal_fov=270.0,  # Horizontal field of view of 270 degrees
         horizontal_resolution=0.2497,  # Horizontal resolution of 0.5 degrees
         max_range=30.0,  # Maximum range of 30 meters
-        min_range=0.02,  # Minimum range of 0.1 meters
+        min_range=0.020,  # Minimum range of 0.1 meters
         rotation_rate=0.0,  # Rotation rate of 0.0 radians per second
         offset=LidarCfg.OffsetCfg(
             pos=(0.11749, 0.0, 0.1),  # Example position offset from the robot base
-            
             rot=(1.0, 0.0, 0.0, 0.0),  # Example rotation offset; no rotation in this case
             convention="ros"  # Frame convention
         ),
         draw_lines=False,
-        draw_points=False,
+        draw_points=True,
     )
 
     race_track: AssetBaseCfg = AssetBaseCfg( 
@@ -105,7 +104,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box1: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box1",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5), 
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35), 
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -114,7 +113,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box2: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box2",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -123,7 +122,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box3: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box3",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -132,7 +131,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
 
     box4: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box4",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -141,7 +140,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box5: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box5",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -150,7 +149,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box6: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box6",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -159,7 +158,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box7: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box7",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -168,7 +167,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box8: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box8",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -177,7 +176,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box9: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box9",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -186,7 +185,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     
     box10: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box10",
-        spawn=sim_utils.CuboidCfg(size=(0.5, 0.5, 0.5),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -270,9 +269,9 @@ class RandomizationCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names="wheel_.*"),
-            "static_friction_range": (0.8, 0.8),
-            "dynamic_friction_range": (0.6, 0.6),
-            "restitution_range": (0.0, 0.0),
+            "static_friction_range": (0.4, 0.4),
+            "dynamic_friction_range": (0.3, 0.3),
+            "restitution_range": (0.1, 0.1),
             "num_buckets": 64,
         },
     )
@@ -284,8 +283,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("robot"), 
             "pose_range": {
-                "x": (5.0, 5.0),  # X position range from -5 to 5
-                "y": (5.0, 5.0),  # Y position range from -5 to 5
+                "x": (5.0, 5.0),  # X position range from 5 to 5
+                "y": (5.0, 5.0),  # Y position range from 5 to 5
                 "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -308,8 +307,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box1"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -332,8 +331,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box2"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -356,8 +355,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box3"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -380,8 +379,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box4"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -404,8 +403,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box5"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -428,8 +427,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box6"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -452,8 +451,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box7"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -476,8 +475,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box8"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -500,8 +499,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box9"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
@@ -524,8 +523,8 @@ class RandomizationCfg:
         params={
             "asset_cfg": SceneEntityCfg("box10"), 
             "pose_range": {
-                "x": (-8.0, 8.0),  # X position range from -5 to 5
-                "y": (-8.0, 8.0),  # Y position range from -5 to 5
+                "x": (-6.5, 6.5),  # X position range from -5 to 5
+                "y": (-6.5, 6.5),  # Y position range from -5 to 5
                 "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
                 "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                 "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi

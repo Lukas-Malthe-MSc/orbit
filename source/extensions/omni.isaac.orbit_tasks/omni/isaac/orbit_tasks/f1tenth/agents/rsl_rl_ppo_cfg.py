@@ -18,6 +18,7 @@ from omni.isaac.orbit_tasks.utils.wrappers.rsl_rl import (
     RslRlActorCriticTransformerCfg,
     RslRlActorCriticSelfAttentionCfg,
     RslRlActorCriticLidarCnnCfg,
+    RslRlActorCriticViTCfg,
 )
 
 @configclass
@@ -59,24 +60,36 @@ class F1tenthPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     # )
     
     """Self-Attention"""
-    # policy = RslRlActorCriticSelfAttentionCfg(
-    #     actor_hidden_dims=[512, 256, 128],
-    #     critic_hidden_dims=[512, 256, 128],
-    #     activation="elu",
-    #     init_noise_std=1.0,
-    #     attention_size=512,
-    # )
-    
-    """LiDAR CNN"""
-    policy = RslRlActorCriticLidarCnnCfg(
+    policy = RslRlActorCriticSelfAttentionCfg(
         actor_hidden_dims=[512, 256, 128],
         critic_hidden_dims=[512, 256, 128],
         activation="elu",
         init_noise_std=1.0,
-        num_lidar_scans=1081,
-        kernel_size=5,
-        out_channels=4,
+        attention_size=512,
     )
+    
+    """LiDAR CNN"""
+    # policy = RslRlActorCriticLidarCnnCfg(
+    #     actor_hidden_dims=[512, 256, 128],
+    #     critic_hidden_dims=[512, 256, 128],
+    #     activation="elu",
+    #     init_noise_std=1.0,
+    #     num_lidar_scans=1081,
+    #     kernel_size=5,
+    #     out_channels=16,
+    # )
+    
+    """ViT (Vision Transformer)"""
+    # policy = RslRlActorCriticViTCfg(
+    #     actor_hidden_dims=[512, 256, 128],
+    #     critic_hidden_dims=[512, 256, 128],
+    #     activation="elu",
+    #     init_noise_std=1.0,
+    #     num_heads=4,
+    #     transformer_layers=2,
+    #     transformer_dim=512,
+    #     patch_size=16,
+    # )
         
     algorithm = RslRlPpoAlgorithmCfg(
         value_loss_coef=1.0,
