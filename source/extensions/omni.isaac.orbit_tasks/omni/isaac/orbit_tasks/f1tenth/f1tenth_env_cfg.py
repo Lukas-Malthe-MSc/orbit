@@ -42,9 +42,12 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 16 --load_run 2024-04-25_17-45-36 --checkpoint model_49.pt
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-27_13-59-05 --checkpoint model_199.pt
 
 """
+
+# For now this has to be done manually
+is_inference = False
 
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
@@ -95,95 +98,94 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/RaceTrack",
         collision_group=0,
         spawn=sim_utils.UsdFileCfg(
-            # usd_path="omniverse://localhost/Projects/f1tenth/box.usd",
-            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_2.usd",
-            # usd_path="omniverse://localhost/Projects/f1tenth/maps/track_2.usd",
+            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
             scale=(.015, .015, .015),
         )
     )
     
-    box1: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box1",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35), 
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-    
-    box2: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box2",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-    
-    box3: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box3",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
+    if not is_inference:
+        box1: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box1",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35), 
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
+        
+        box2: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box2",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
+        
+        box3: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box3",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
 
-    box4: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box4",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-    
-    box5: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box5",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-    
-    box6: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box6",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-    
-    box7: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box7",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-    
-    box8: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box8",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-    
-    box9: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box9",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
-    
-    box10: RigidObjectCfg = RigidObjectCfg(
+        box4: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box4",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
+        
+        box5: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box5",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
+        
+        box6: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box6",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
+        
+        box7: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box7",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
+        
+        box8: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box8",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
+        
+        box9: RigidObjectCfg = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/box9",
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                    collision_props=sim_utils.CollisionPropertiesCfg()),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+                                                    rot=(1.0, 0.0, 0.0, 0.0)),
+        )
+        
+        box10: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box10",
         spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
@@ -244,280 +246,281 @@ class ObservationsCfg:
 class RandomizationCfg:
     """Configuration for randomization."""
     
-    # startup
-    add_base_mass = RandTerm(
-        func=mdp.add_body_mass,
-        mode="startup",
-        params={"asset_cfg": SceneEntityCfg("robot", body_names="base_link"), "mass_range": (-0.5, 5.0)},
-    )
-    
-    randomize_map = RandTerm(
-        func=mdp.randomize_map,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("robot"),
-            "maps_paths": [f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
-                           f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_2.usd",
-                           f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_3.usd",
-                           f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_4.usd",
-                           f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_5.usd"],
+    if not is_inference:
+        # startup
+        add_base_mass = RandTerm(
+            func=mdp.add_body_mass,
+            mode="startup",
+            params={"asset_cfg": SceneEntityCfg("robot", body_names="base_link"), "mass_range": (-0.5, 5.0)},
+        )
+        
+        randomize_map = RandTerm(
+            func=mdp.randomize_map,
+            mode="startup",
+            params={
+                "asset_cfg": SceneEntityCfg("robot"),
+                "maps_paths": [f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
+                            f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_2.usd",
+                            f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_3.usd",
+                            f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_4.usd",
+                            f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_5.usd"],
+                },
+        )
+        
+        physics_material = RandTerm(
+            func=mdp.randomize_rigid_body_material,
+            mode="startup",
+            params={
+                "asset_cfg": SceneEntityCfg("robot", body_names="wheel_.*"),
+                "static_friction_range": (0.75, 0.85),
+                "dynamic_friction_range": (0.45, 0.55),
+                "restitution_range": (0.0, 0.1),
+                "num_buckets": 64,
             },
-    )
-    
-    physics_material = RandTerm(
-        func=mdp.randomize_rigid_body_material,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", body_names="wheel_.*"),
-            "static_friction_range": (0.4, 0.4),
-            "dynamic_friction_range": (0.3, 0.3),
-            "restitution_range": (0.1, 0.1),
-            "num_buckets": 64,
-        },
-    )
-    
-    # reset
-    reset_root_state = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot"), 
-            "pose_range": {
-                "x": (5.0, 5.0),  # X position range from 5 to 5
-                "y": (5.0, 5.0),  # Y position range from 5 to 5
-                "z": (0.0, 0.5),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
-                "y": (-1.0, 1.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (-0.5, 0.5),  # Roll angular velocity range
-                "pitch": (-0.5, 0.5), # Pitch angular velocity range
-                "yaw": (-0.5, 0.5),   # Yaw angular velocity range
-            }     
-        },
-    )
-    
-    randomize_obstacle1_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box1"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
-    
-    randomize_obstacle2_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box2"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
+        )
+        
+        # reset
+        reset_root_state = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("robot"), 
+                "pose_range": {
+                    "x": (5.0, 5.0),  # X position range from 5 to 5
+                    "y": (5.0, 5.0),  # Y position range from 5 to 5
+                    "z": (0.0, 0.25),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
+                    "y": (-1.0, 1.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (-0.5, 0.5),  # Roll angular velocity range
+                    "pitch": (-0.5, 0.5), # Pitch angular velocity range
+                    "yaw": (-0.5, 0.5),   # Yaw angular velocity range
+                }     
+            },
+        )
+        
+        randomize_obstacle1_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box1"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
+        
+        randomize_obstacle2_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box2"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
 
-    randomize_obstacle3_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box3"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
+        randomize_obstacle3_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box3"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
 
-    randomize_obstacle4_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box4"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
+        randomize_obstacle4_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box4"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
 
-    randomize_obstacle5_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box5"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
+        randomize_obstacle5_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box5"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
 
-    randomize_obstacle6_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box6"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
-    
-    randomize_obstacle7_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box7"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
+        randomize_obstacle6_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box6"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
+        
+        randomize_obstacle7_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box7"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
 
-    randomize_obstacle8_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box8"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
+        randomize_obstacle8_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box8"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
 
-    randomize_obstacle9_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box9"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
+        randomize_obstacle9_position = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("box9"), 
+                "pose_range": {
+                    "x": (-6.5, 6.5),  # X position range from -5 to 5
+                    "y": (-6.5, 6.5),  # Y position range from -5 to 5
+                    "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
 
-    randomize_obstacle10_position = RandTerm(
+        randomize_obstacle10_position = RandTerm(
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
@@ -540,7 +543,43 @@ class RandomizationCfg:
             }     
         },
     )
-
+    
+    else:
+        # reset for testing
+        reset_root_state_non_random = RandTerm(
+            func=mdp.reset_root_state_uniform,
+            mode="reset",
+            params={
+                "asset_cfg": SceneEntityCfg("robot"), 
+                "pose_range": {
+                    "x": (5.0, 5.0),  # X position range from 5 to 5
+                    "y": (5.0, 5.0),  # Y position range from 5 to 5
+                    "z": (0.0, 0.25),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+                    "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+                    "yaw": (0.0, 0.0),   # Yaw orientation range from -pi to pi
+                }, 
+                "velocity_range": {
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+                    "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
+                }     
+            },
+        )
+        physics_material_non_random = RandTerm(
+            func=mdp.randomize_rigid_body_material,
+            mode="startup",
+            params={
+                "asset_cfg": SceneEntityCfg("robot", body_names="wheel_.*"),
+                "static_friction_range": (0.8, 0.8),
+                "dynamic_friction_range": (0.5, 0.5),
+                "restitution_range": (0.05, 0.05),
+                "num_buckets": 64,
+            },
+        )
 
 @configclass
 class RewardsCfg:
@@ -555,14 +594,14 @@ class RewardsCfg:
     forward_velocity_reward = RewTerm(func=mdp.forward_velocity, weight=1.0)
     # distance_traveled_reward = RewTerm(func=mdp.distance_traveled_reward, weight=1.0, params={"asset_cfg": SceneEntityCfg("robot")})
 
-    # -- Penalty
-    # steering_angle_position = RewTerm(
-    #     func=mdp.joint_pos_target_l2,
-    #     weight=-0.1,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
-    # )
+    # -- Penalty: Steering angle
+    steering_angle_position = RewTerm(
+        func=mdp.joint_pos_target_log,
+        weight=-1.0,
+        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+    )
     
-    # -- Penalty
+    # -- Penalty: Closeness to wall
     # min_lidar_distance = RewTerm(
     #     func=mdp.lidar_min_distance,
     #     weight=-0.1,
@@ -591,9 +630,9 @@ class TerminationsCfg:
         params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.35},
     )
     
-    is_flipped = DoneTerm(
-        func=mdp.flipped_over, 
-        params={"asset_cfg": SceneEntityCfg("robot")})
+    # is_flipped = DoneTerm(
+    #     func=mdp.flipped_over, 
+    #     params={"asset_cfg": SceneEntityCfg("robot")})
     
 
 
@@ -615,6 +654,7 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
 
     # Scene settings
     scene: F1tenthSceneCfg = F1tenthSceneCfg(num_envs=4096, env_spacing=18.0, replicate_physics=True)
+    
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -632,6 +672,10 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
         # general settings
         self.decimation = 2
         self.episode_length_s = 60
+        
+        if is_inference:
+            self.episode_length_s *= 10 # 10 minutes
+            
         # viewer settings
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings

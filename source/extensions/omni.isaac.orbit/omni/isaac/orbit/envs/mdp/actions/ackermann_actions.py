@@ -12,6 +12,7 @@ from omni.isaac.orbit.assets.articulation import Articulation
 from omni.isaac.orbit.managers.action_manager import ActionTerm
 
 from rich import print
+import numpy as np
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import BaseEnv
@@ -79,6 +80,11 @@ class AckermannAction(ActionTerm):
         self.base_length = torch.tensor(cfg.base_length, device=self.device)
         self.base_width = torch.tensor(cfg.base_width, device=self.device)
         self.wheel_rad = torch.tensor(cfg.wheel_radius, device=self.device)
+        
+        
+        # For logging purposes
+        self._action_counter = 0
+        self._action_buffer = []
 
     """
     Properties.
@@ -104,6 +110,17 @@ class AckermannAction(ActionTerm):
         # store the raw actions
         self._raw_actions[:] = torch.tanh(actions) # Normalize the actions to [-1, 1]
         self._processed_actions = self.raw_actions * self._scale + self._offset # Scale and offset the actions
+        
+        # self._action_buffer.append(self._processed_actions)
+        # self._action_counter += 1
+        
+        # if self._action_counter % 100 == 0:
+        #     print(f"Action buffer size: {len(self._action_buffer)}")
+        #     self._action_counter = 0
+        #     # convert action buffer to numpy:
+        #     action_buffer = torch.stack(self._action_buffer).cpu().numpy()
+        #     # write to file
+        #     np.save("data-analysis/data/actions_log_pen.npy", action_buffer)
             
     def apply_actions(self):
 

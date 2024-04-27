@@ -15,6 +15,10 @@ from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.sensors import Lidar
 from omni.isaac.orbit.assets import RigidObject
 
+from threading import Lock
+import numpy as np
+import copy
+
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import BaseEnv
     
@@ -69,6 +73,14 @@ def base_lin_vel(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot
     """Root linear velocity in the asset's root frame."""
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
+    # For logging purposes
+    # data_logger = DataLogger()
+    # data_logger.log_data(asset.data.root_pos_w)
+    # data_logger._counter += 1
+    
+    # if data_logger._counter % 100 == 0:
+    #     data_logger.write_data(filename="data-analysis/data/pos_data_log_pen.npy")
+    
     return asset.data.root_lin_vel_b[:, :2]
 
 
@@ -77,3 +89,29 @@ def base_ang_vel(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
     return asset.data.root_ang_vel_b[:, :2]
+
+
+
+
+class DataLogger:
+    _instance = None
+    _lock = Lock()
+
+    def __new__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._data = []
+                cls._instance._counter = 0
+            return cls._instance
+        
+    def log_data(self, data):
+        # Create a deep copy of the data
+        data_copy = copy.deepcopy(data)
+        self._instance._data.append(data_copy)
+        
+    def get_data(self):
+        return self._instance._data
+    
+    def write_data(self, filename):
+        np.save(filename, torch.stack(self._instance._data).cpu().numpy())

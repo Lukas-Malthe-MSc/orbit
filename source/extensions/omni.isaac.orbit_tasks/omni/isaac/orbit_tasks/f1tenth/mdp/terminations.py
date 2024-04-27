@@ -24,7 +24,6 @@ def lidar_distance_limit(env: RLTaskEnv, distance_threshold, sensor_cfg: SceneEn
     if env.collision_beams is None:
         env.collision_beams = get_scale_vector()
         env.collision_beams = env.collision_beams.to(lidar_ranges.device)
-        print("AYYYYYYY")
 
     below_limit = lidar_ranges < env.collision_beams
     

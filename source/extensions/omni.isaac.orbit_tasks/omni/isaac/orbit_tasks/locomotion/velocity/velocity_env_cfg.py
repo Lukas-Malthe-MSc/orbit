@@ -149,19 +149,33 @@ class ObservationsCfg:
 @configclass
 class RandomizationCfg:
     """Configuration for randomization."""
-
+    is_inference = True
     # startup
-    physics_material = RandTerm(
-        func=mdp.randomize_rigid_body_material,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (0.8, 0.8),
-            "dynamic_friction_range": (0.6, 0.6),
-            "restitution_range": (0.0, 0.0),
-            "num_buckets": 64,
-        },
-    )
+    if is_inference:
+        print("Inference mode!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        physics_material = RandTerm(
+            func=mdp.randomize_rigid_body_material,
+            mode="startup",
+            params={
+                "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
+                "static_friction_range": (0.8, 0.8),
+                "dynamic_friction_range": (0.6, 0.6),
+                "restitution_range": (0.0, 0.0),
+                "num_buckets": 64,
+            },
+        )
+    else :
+        physics_material = RandTerm(
+            func=mdp.randomize_rigid_body_material,
+            mode="startup",
+            params={
+                "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
+                "static_friction_range": (0.8, 1.0),
+                "dynamic_friction_range": (0.6, 0.8),
+                "restitution_range": (0.0, 0.0),
+                "num_buckets": 64,
+            },
+        )
 
     add_base_mass = RandTerm(
         func=mdp.add_body_mass,
