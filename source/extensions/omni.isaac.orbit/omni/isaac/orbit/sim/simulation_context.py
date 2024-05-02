@@ -133,8 +133,8 @@ class SimulationContext(_SimulationContext):
         # enable custom geometry for cylinder and cone collision shapes to allow contact reporting for them
         # reason: cylinders and cones aren't natively supported by PhysX so we need to use custom geometry flags
         # reference: https://nvidia-omniverse.github.io/PhysX/physx/5.2.1/docs/Geometry.html?highlight=capsule#geometry
-        carb_settings_iface.set_bool("/physics/collisionConeCustomGeometry", False)
-        carb_settings_iface.set_bool("/physics/collisionCylinderCustomGeometry", False)
+        carb_settings_iface.set_bool("/physics/collisionConeCustomGeometry", True)
+        carb_settings_iface.set_bool("/physics/collisionCylinderCustomGeometry", True)
         # note: we read this once since it is not expected to change during runtime
         # read flag for whether a local GUI is enabled
         self._local_gui = carb_settings_iface.get("/app/window/enabled")

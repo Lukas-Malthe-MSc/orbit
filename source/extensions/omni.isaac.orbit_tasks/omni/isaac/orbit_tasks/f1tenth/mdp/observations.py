@@ -69,7 +69,7 @@ def base_rot(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) 
     return asset.data.root_quat_w
 
 
-def base_lin_vel(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+def base_lin_vel_xy_dot(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root linear velocity in the asset's root frame."""
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
@@ -80,15 +80,14 @@ def base_lin_vel(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot
     
     # if data_logger._counter % 100 == 0:
     #     data_logger.write_data(filename="data-analysis/data/pos_data_log_pen.npy")
-    
     return asset.data.root_lin_vel_b[:, :2]
 
 
-def base_ang_vel(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+def base_ang_vel_yaw_dot(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root angular velocity in the asset's root frame."""
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
-    return asset.data.root_ang_vel_b[:, :2]
+    return asset.data.root_ang_vel_b[:, 2:]
 
 
 

@@ -42,12 +42,12 @@ Train commmand:
 $ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-04-27_13-59-05 --checkpoint model_199.pt
+$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-05-02_11-14-55 --checkpoint model_140.pt
 
 """
 
 # For now this has to be done manually
-is_inference = False
+is_inference = False    
 
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
@@ -94,14 +94,14 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         draw_points=True,
     )
 
-    race_track: AssetBaseCfg = AssetBaseCfg( 
-        prim_path="{ENV_REGEX_NS}/RaceTrack",
-        collision_group=0,
-        spawn=sim_utils.UsdFileCfg(
-            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
-            scale=(.015, .015, .015),
-        )
-    )
+    # race_track: AssetBaseCfg = AssetBaseCfg( 
+    #     prim_path="{ENV_REGEX_NS}/RaceTrack",
+    #     collision_group=0,
+    #     spawn=sim_utils.UsdFileCfg(
+    #         usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
+    #         scale=(.015, .015, .015),
+    #     )
+    # )
     
     if not is_inference:
         box1: RigidObjectCfg = RigidObjectCfg(
@@ -214,7 +214,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.25, base_length=0.35, wheel_radius=0.05, scale=(2.5, torch.pi/4), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.24, base_length=0.32, wheel_radius=0.056, scale=(5., torch.pi/4), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -229,8 +229,8 @@ class ObservationsCfg:
         # observation terms (order preserved)
         # base_pos = ObsTerm(func=mdp.base_pos, noise=Unoise(n_min=-0.1, n_max=0.1))
         # base_rot = ObsTerm(func=mdp.base_rot, noise=Unoise(n_min=-0.1, n_max=0.1))
-        base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Gnoise(mean=0.0, std=0.1))
-        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Gnoise(mean=0.0, std=0.1))
+        base_lin_vel = ObsTerm(func=mdp.base_lin_vel_xy_dot, noise=Gnoise(mean=0.0, std=0.1))
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel_yaw_dot, noise=Gnoise(mean=0.0, std=0.1))
         
         last_actions = ObsTerm(func=mdp.last_action)
 
@@ -251,7 +251,7 @@ class RandomizationCfg:
         add_base_mass = RandTerm(
             func=mdp.add_body_mass,
             mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot", body_names="base_link"), "mass_range": (-0.5, 5.0)},
+            params={"asset_cfg": SceneEntityCfg("robot", body_names="base_link"), "mass_range": (-0.5, 0.5)},
         )
         
         randomize_map = RandTerm(
@@ -273,7 +273,7 @@ class RandomizationCfg:
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="wheel_.*"),
                 "static_friction_range": (0.75, 0.85),
-                "dynamic_friction_range": (0.45, 0.55),
+                "dynamic_friction_range": (0.75, 0.85),
                 "restitution_range": (0.0, 0.1),
                 "num_buckets": 64,
             },
@@ -288,18 +288,18 @@ class RandomizationCfg:
                 "pose_range": {
                     "x": (5.0, 5.0),  # X position range from 5 to 5
                     "y": (5.0, 5.0),  # Y position range from 5 to 5
-                    "z": (0.0, 0.25),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "z": (0.0, 0.15),   # Z position range from 0 to 2 (assuming starting on the ground)
                     "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                     "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
                     "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
                 }, 
                 "velocity_range": {
-                    "x": (-1.0, 1.0),  # X linear velocity range from -1 to 1
-                    "y": (-1.0, 1.0),  # Y linear velocity range from -1 to 1
+                    "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+                    "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
                     "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                    "roll": (-0.5, 0.5),  # Roll angular velocity range
-                    "pitch": (-0.5, 0.5), # Pitch angular velocity range
-                    "yaw": (-0.5, 0.5),   # Yaw angular velocity range
+                    "roll": (0.0, 0.0),  # Roll angular velocity range
+                    "pitch": (0.0, 0.0), # Pitch angular velocity range
+                    "yaw": (0.0, 0.0),   # Yaw angular velocity range
                 }     
             },
         )
@@ -554,7 +554,7 @@ class RandomizationCfg:
                 "pose_range": {
                     "x": (5.0, 5.0),  # X position range from 5 to 5
                     "y": (5.0, 5.0),  # Y position range from 5 to 5
-                    "z": (0.0, 0.25),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "z": (0.0, 0.15),   # Z position range from 0 to 2 (assuming starting on the ground)
                     "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                     "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
                     "yaw": (0.0, 0.0),   # Yaw orientation range from -pi to pi
@@ -575,11 +575,20 @@ class RandomizationCfg:
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="wheel_.*"),
                 "static_friction_range": (0.8, 0.8),
-                "dynamic_friction_range": (0.5, 0.5),
+                "dynamic_friction_range": (0.8, 0.8),
                 "restitution_range": (0.05, 0.05),
                 "num_buckets": 64,
             },
         )
+        
+    reset_robot_joints = RandTerm(
+        func=mdp.reset_joints_by_scale,
+        mode="reset",
+        params={
+            "position_range": (0.0, 0.0),
+            "velocity_range": (0.0, 0.0),
+        },
+    )
 
 @configclass
 class RewardsCfg:
@@ -627,7 +636,7 @@ class TerminationsCfg:
 
     too_close_to_obstacle = DoneTerm(
         func=mdp.lidar_distance_limit,
-        params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.35},
+        params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.4},
     )
     
     # is_flipped = DoneTerm(

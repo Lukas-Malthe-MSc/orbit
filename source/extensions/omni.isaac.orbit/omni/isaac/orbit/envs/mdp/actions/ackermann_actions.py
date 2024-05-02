@@ -110,7 +110,8 @@ class AckermannAction(ActionTerm):
         # store the raw actions
         self._raw_actions[:] = torch.tanh(actions) # Normalize the actions to [-1, 1]
         self._processed_actions = self.raw_actions * self._scale + self._offset # Scale and offset the actions
-        
+
+        # For logging purposes
         # self._action_buffer.append(self._processed_actions)
         # self._action_counter += 1
         
@@ -133,8 +134,46 @@ class AckermannAction(ActionTerm):
         self._asset.set_joint_velocity_target(wheel_speeds, joint_ids=self._wheel_ids)
         self._asset.set_joint_position_target(wheel_angles, joint_ids=self._steering_ids)
 
-     
+
+    
+    
+    def calculate_ackermann_angles_and_velocities(self, target_steering_angle_rad, target_velocity):
+        L = self.base_length
+        W = self.base_width
+        wheel_radius = self.wheel_rad
         
+        # Ensure inputs are PyTorch tensors
+        target_steering_angle_rad = target_steering_angle_rad.float()
+        target_velocity = target_velocity.float()
+        
+        # For testing
+        target_steering_angle_rad = torch.ones(target_steering_angle_rad.shape, device=target_steering_angle_rad.device) * 0#torch.pi/4
+        target_velocity = torch.ones(target_velocity.shape, device=target_velocity.device) * 2
+        
+        # Calculating the turn radius from the steering angle
+        tan_steering = torch.tan(target_steering_angle_rad)
+        R = torch.where(tan_steering == 0, torch.full_like(tan_steering, 1e6), L / tan_steering)
+        
+        # Calculate the steering angles for the left and right front wheels in radians
+        delta_left = torch.atan(L / (R - W / 2))
+        delta_right = torch.atan(L / (R + W / 2))
+        
+        # Assuming the rear wheels follow the path's radius adjusted for their position
+        R_rear_left = torch.sqrt((R - W/2)**2 + L**2)
+        R_rear_right = torch.sqrt((R + W/2)**2 + L**2)
+        
+        # Velocity adjustment based on wheel's distance from the IC
+        v_front_left = target_velocity * torch.abs(R_rear_left / (R*wheel_radius))
+        v_front_right = target_velocity * torch.abs(R_rear_right / (R*wheel_radius))
+        
+        v_back_left = target_velocity * torch.abs((R - W/2) / (R*wheel_radius))
+        v_back_right = target_velocity * torch.abs((R + W/2) / (R*wheel_radius))
+        
+        # Calculate target rotation for each wheel based on its velocity
+        wheel_speeds = torch.stack([v_back_left, v_back_right, v_front_left, v_front_right], dim=1)
+
+        return delta_left, delta_right, wheel_speeds
+"""
     def calculate_ackermann_angles_and_velocities(self, target_steering_angle_rad, target_velocity):
         L = self.base_length
         W = self.base_width
@@ -157,6 +196,43 @@ class AckermannAction(ActionTerm):
         R_rear_right = torch.sqrt((R + W/2)**2 + L**2)
         
         # Velocity adjustment based on wheel's distance from the IC
+        v_front_left = target_velocity * R_rear_left / (torch.abs(R)*wheel_radius)
+        v_front_right = target_velocity * R_rear_right / (torch.abs(R)*wheel_radius)
+        
+        v_back_left = target_velocity * (R - W/2) / (R*wheel_radius)
+        v_back_right = target_velocity * (R + W/2) / (R*wheel_radius)
+        
+        # Calculate target rotation for each wheel based on its velocity
+        wheel_speeds = torch.stack([v_back_left, v_back_right, v_front_left, v_front_right], dim=1)
+        print(wheel_speeds)
+
+        return delta_left, delta_right, wheel_speeds
+"""
+
+"""
+    def calculate_ackermann_angles_and_velocities(self, target_steering_angle_rad, target_velocity):
+        L = self.base_length
+        W = self.base_width
+        wheel_radius = self.wheel_rad
+        
+        # Ensure inputs are PyTorch tensors
+        target_steering_angle_rad = target_steering_angle_rad.float()
+        target_velocity = target_velocity.float()
+        
+        # Calculating the turn radius from the steering angle
+        tan_steering = torch.tan(target_steering_angle_rad)
+        R = torch.where(tan_steering == 0, torch.full_like(tan_steering, 1e6), L / tan_steering)
+
+        
+        # Calculate the steering angles for the left and right front wheels in radians
+        delta_left = torch.atan(L / (R - W / 2))
+        delta_right = torch.atan(L / (R + W / 2))
+        
+        # Assuming the rear wheels follow the path's radius adjusted for their position
+        R_rear_left = torch.sqrt((R - W/2)**2 + L**2)
+        R_rear_right = torch.sqrt((R + W/2)**2 + L**2)
+        
+        # Velocity adjustment based on wheel's distance from the IC
         v_front_left = target_velocity * (R - W/2) / R
         v_front_right = target_velocity * (R + W/2) / R
         
@@ -168,9 +244,4 @@ class AckermannAction(ActionTerm):
         
         return delta_left, delta_right, wheel_speeds
 
-            
-
-        
-        
-        
-
+"""

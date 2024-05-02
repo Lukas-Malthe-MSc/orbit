@@ -12,8 +12,6 @@ if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
 
 
-
-
 def lidar_distance_limit(env: RLTaskEnv, distance_threshold, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Terminate when the asset's joint velocities are outside of the soft joint limits."""
     """The ranges from the given lidar sensor."""
@@ -30,16 +28,8 @@ def lidar_distance_limit(env: RLTaskEnv, distance_threshold, sensor_cfg: SceneEn
     result = torch.any(below_limit, dim=1)
     return result
 
-    # return torch.any(lidar_ranges < distance_threshold, dim=1)
 
-
-# def get_scale_vector(env: RLTaskEnv,
-#                      width: float, 
-#                      length: float, 
-#                      num_beams: int, 
-#                      fov: float
-#                      ):
-def get_scale_vector(width=0.145, length=0.18, num_beams=1081, fov=1.5*torch.pi):
+def get_scale_vector(width=0.15, length=0.18, num_beams=1081, fov=1.5*torch.pi):
     # Rotate beams
     shift = -(2*torch.pi - fov) / 2
     angles = torch.linspace(shift, fov + shift, steps=num_beams)

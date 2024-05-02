@@ -39,7 +39,8 @@ def joint_pos_target_log(env: RLTaskEnv, target: float, asset_cfg: SceneEntityCf
     joint_pos = wrap_to_pi(asset.data.joint_pos[:, asset_cfg.joint_ids])
     
     # f(x) = log10(|x - target| + 1)
-    return torch.sum(torch.log10(torch.abs(joint_pos - target) + 1), dim=1)
+    # return torch.sum(torch.log10(torch.abs(joint_pos - target) + 1), dim=1)
+    return torch.log10(torch.abs(env.action_manager.action[:, 1:] - target) + 1).squeeze(-1)
 
 def forward_velocity(env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root linear velocity in the asset's root frame."""
