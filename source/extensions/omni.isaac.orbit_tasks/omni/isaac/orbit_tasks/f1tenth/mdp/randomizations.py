@@ -3,16 +3,12 @@ from __future__ import annotations
 import torch
 from typing import TYPE_CHECKING
 
-from omni.isaac.orbit.assets import AssetBaseCfg, RigidObjectCfg, Articulation, RigidObject, AssetBase
-import omni.isaac.orbit.sim as sim_utils
+from omni.isaac.orbit.assets import Articulation, RigidObject
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.core.utils.prims import delete_prim, create_prim
-from omni.isaac.core.simulation_context import SimulationContext
-from omni.isaac.orbit.utils.math import quat_from_euler_xyz, sample_uniform
-from omni.physx.scripts import utils as physx_utils
+from omni.isaac.orbit.utils.math import quat_from_euler_xyz
 
 import random
-from typing import Tuple, Dict
 
 
 if TYPE_CHECKING:
@@ -52,6 +48,7 @@ def randomize_map(
                 usd_path=random_map_path,  # The USD file to reference
                 scale=(0.015, 0.015, 0.015),  # Scale of the object
             )
+
         env.maps_is_randomized = True
     
     

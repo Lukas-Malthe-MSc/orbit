@@ -92,6 +92,8 @@ class RLTaskEnv(BaseEnv, gym.Env):
         self.custom_data = {}
         self.is_lap_completed = {}
         self.left_threshold = {}
+        self.reward_buffer = []
+        self.num_collisions = 0
         self.maps_is_randomized = False
         self.collision_beams = None #MISSING
 

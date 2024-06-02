@@ -33,7 +33,7 @@ def lidar_ranges(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
 def lidar_ranges_normalized(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Return normalized lidar ranges with Gaussian noise."""
     # Extract the lidar sensor from the scene
-    sensor: Lidar = env.scene.sensors[sensor_cfg.name]
+    sensor = env.scene.sensors[sensor_cfg.name]
     lidar_ranges = sensor.data.output  # Original lidar ranges
     
     # Get the min and max range from the sensor configuration
@@ -45,14 +45,16 @@ def lidar_ranges_normalized(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.T
     std = 0.1  # Standard deviation of the Gaussian distribution
     gaussian_noise = torch.normal(mean=mean, std=std, size=lidar_ranges.shape, device=lidar_ranges.device)
 
-    lidar_ranges_noisy = lidar_ranges + gaussian_noise # Add noise to the lidar data
-    
-    lidar_ranges_noisy = torch.clip(lidar_ranges_noisy, min=min_range, max=max_range) # Clip the noisy lidar data to the min and max range
+    # Add noise to the lidar data
+    lidar_ranges_noisy = lidar_ranges + gaussian_noise
 
-    # Normalize the lidar data
-    lidar_ranges_normalized = (lidar_ranges - min_range) / (max_range - min_range)
+    # Clip the noisy lidar data to the min and max range
+    lidar_ranges_noisy = torch.clip(lidar_ranges_noisy, min=min_range, max=max_range)
 
-    return lidar_ranges_normalized 
+    # Normalize the noisy lidar data
+    lidar_ranges_normalized = (lidar_ranges_noisy - min_range) / (max_range - min_range)
+
+    return lidar_ranges_normalized
 
 
 
@@ -74,12 +76,16 @@ def base_lin_vel_xy_dot(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
     # For logging purposes
-    # data_logger = DataLogger()
-    # data_logger.log_data(asset.data.root_pos_w)
-    # data_logger._counter += 1
     
-    # if data_logger._counter % 100 == 0:
-    #     data_logger.write_data(filename="data-analysis/data/pos_data_log_pen.npy")
+    # data_logger = DataLogger()
+    # data_logger.log_data(torch.stack([asset.data.root_pos_w, asset.data.root_lin_vel_b]))
+    # data_logger._counter += 1
+    # if data_logger._counter % 200 == 0:
+    #     print(f"{data_logger._counter=}")
+    #     model = "CNN"
+    #     track = "test_track_3_with_fixed_obstacles"
+    #     data_logger.write_data(filename=f"data-analysis/data/pos_data_{model}_{track}.npy")
+        
     return asset.data.root_lin_vel_b[:, :2]
 
 
@@ -90,7 +96,14 @@ def base_ang_vel_yaw_dot(env: BaseEnv, asset_cfg: SceneEntityCfg = SceneEntityCf
     return asset.data.root_ang_vel_b[:, 2:]
 
 
-
+def last_processed_action(env: BaseEnv) -> torch.Tensor:
+    """The last input action to the environment."""
+    _scale = torch.tensor((5, 0.36), device=env.action_manager.action.device, dtype=torch.float32)
+    _offset = torch.tensor((0, 0), device=env.action_manager.action.device, dtype=torch.float32)
+    return torch.tanh(env.action_manager.action) * _scale + _offset
+    # speed = torch.clip(env.action_manager.action[:, 0], min=-5.0, max=5.0)
+    # steering_angle = torch.clip(env.action_manager.action[:, 1], min=-0.36, max=0.36)
+    # return torch.stack([speed, steering_angle], dim=1)
 
 class DataLogger:
     _instance = None

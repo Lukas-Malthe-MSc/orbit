@@ -7,7 +7,7 @@ from omni.isaac.orbit.assets import Articulation, RigidObject
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.utils.math import wrap_to_pi, euler_xyz_from_quat
 from omni.isaac.orbit.sensors import Lidar
-
+import numpy as np
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
 
@@ -26,10 +26,22 @@ def lidar_distance_limit(env: RLTaskEnv, distance_threshold, sensor_cfg: SceneEn
     below_limit = lidar_ranges < env.collision_beams
     
     result = torch.any(below_limit, dim=1)
+    
+    env.num_collisions += torch.sum(result)
+    
+    if env.common_step_counter % 1000 == 0:
+        print(f"num collisions: {env.num_collisions}, step: {env.common_step_counter}")
+    
+    # Save lap times to .npy file when simulation ends
+    # if env.common_step_counter == 12000:
+    #     map = "test_track_2_with_fixed_obstacles"
+    #     model = "CNN"
+    #     np.save(f"data-analysis/data/{map}_{model}_num_collisions.npy", env.num_collisions.cpu().numpy())
+    #     print(f"num collisions saved: {env.num_collisions}")
     return result
 
 
-def get_scale_vector(width=0.15, length=0.18, num_beams=1081, fov=1.5*torch.pi):
+def get_scale_vector(width=0.2, length=0.18, num_beams=1081, fov=1.5*torch.pi):
     # Rotate beams
     shift = -(2*torch.pi - fov) / 2
     angles = torch.linspace(shift, fov + shift, steps=num_beams)

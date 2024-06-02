@@ -39,16 +39,22 @@ current_working_directory = Path.cwd()
 
 """
 Train commmand:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
+./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
 Play command:
-$ ./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-05-02_11-14-55 --checkpoint model_140.pt
+CNN
+./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-05-16_14-38-55 --checkpoint model_999.pt
 
+MLP
+./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-05-16_19-22-56 --checkpoint model_999.pt
+
+LSTM
+./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-05-16_17-58-21 --checkpoint model_999.pt
 """
 
 # For now this has to be done manually
-is_inference = False    
-
+is_inference = True
+test_track = 0
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
     """Configuration for a cart-pole scene."""
@@ -56,8 +62,11 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     # ground plane
     ground = AssetBaseCfg(
         prim_path="/World/ground",
-        spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0),
-                                       color=(0.5, 0.5, 0.5)),   
+        spawn=sim_utils.GroundPlaneCfg(size=(1600.0, 1200.0),
+                                       color=(3, 3, 3),#color=(0.5, 0.5, 0.5),
+                                       physics_material=sim_utils.RigidBodyMaterialCfg(static_friction=0.5, 
+                                                                                       dynamic_friction=0.5, 
+                                                                                       restitution=0.0)),   
     )
     
     # lights
@@ -86,14 +95,24 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         min_range=0.020,  # Minimum range of 0.1 meters
         rotation_rate=0.0,  # Rotation rate of 0.0 radians per second
         offset=LidarCfg.OffsetCfg(
-            pos=(0.11749, 0.0, 0.1),  # Example position offset from the robot base
+            pos=(2.11749, 0.0, -2.1),  # Example position offset from the robot base
             rot=(1.0, 0.0, 0.0, 0.0),  # Example rotation offset; no rotation in this case
             convention="ros"  # Frame convention
         ),
         draw_lines=False,
-        draw_points=True,
+        draw_points=False,
     )
 
+    race_track: AssetBaseCfg = AssetBaseCfg( 
+        prim_path="{ENV_REGEX_NS}/RaceTrack",
+        collision_group=0,
+        spawn=sim_utils.UsdFileCfg(
+            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/validation_track.usd",
+            scale=(.01, .01, .01),
+        )
+    )
+
+    
     # race_track: AssetBaseCfg = AssetBaseCfg( 
     #     prim_path="{ENV_REGEX_NS}/RaceTrack",
     #     collision_group=0,
@@ -106,7 +125,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     if not is_inference:
         box1: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box1",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35), 
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30), 
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -115,7 +134,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         
         box2: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box2",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -124,7 +143,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         
         box3: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box3",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -133,7 +152,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
 
         box4: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box4",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -142,7 +161,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         
         box5: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box5",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -151,7 +170,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         
         box6: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box6",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -160,7 +179,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         
         box7: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box7",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -169,7 +188,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         
         box8: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box8",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -178,7 +197,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         
         box9: RigidObjectCfg = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/box9",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                     collision_props=sim_utils.CollisionPropertiesCfg()),
             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
@@ -187,12 +206,177 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         
         box10: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/box10",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.35, 0.35),
+        spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
                                 rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
                                 collision_props=sim_utils.CollisionPropertiesCfg()),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
                                                 rot=(1.0, 0.0, 0.0, 0.0)),
     )
+
+    else:
+        if test_track == 1:
+            box1: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box1",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-5.2, -2.7, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box2: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box2",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(4.3, 3.8, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box3: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box3",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-1.4, 5.1, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box4: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box4",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(2.7, -5.6, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box5: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box5",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-3.3, 1.2, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box6: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box6",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(0.5, -4.9, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+        if test_track == 2:
+            box1: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box1",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-4.3, -3.2, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box2: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box2",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(2.3, 5, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box3: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box3",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-2.1, 2.9, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box4: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box4",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(3.0, -4.2, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box5: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box5",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-3.8, 0.5, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box6: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box6",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(1.4, -4.1, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+        if test_track == 3:
+            box1: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box1",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-5.1, 4.4, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box2: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box2",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(4.2, -3.7, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box3: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box3",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-2.8, 5.6, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box4: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box4",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(5.5, 4.5, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box5: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box5",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(0.3, -5.5, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
+            box6: RigidObjectCfg = RigidObjectCfg(
+                prim_path="{ENV_REGEX_NS}/box6",
+                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+                                        collision_props=sim_utils.CollisionPropertiesCfg()),
+                init_state=RigidObjectCfg.InitialStateCfg(pos=(-4.7, -1.6, 0.25),
+                                                        rot=(1.0, 0.0, 0.0, 0.0)),
+            )
+
 
 ##
 # MDP settings
@@ -214,7 +398,7 @@ class ActionsCfg:
     ackermann_action = mdp.AckermannActionCfg(asset_name="robot", 
                                   wheel_joint_names=["wheel_back_left", "wheel_back_right", "wheel_front_left", "wheel_front_right"], 
                                   steering_joint_names=["rotator_left", "rotator_right"], 
-                                  base_width=0.24, base_length=0.32, wheel_radius=0.056, scale=(5., torch.pi/4), offset=(0.0, 0.0)) #TODO: adjust max speed
+                                  base_width=0.24, base_length=0.32, wheel_radius=0.056, scale=(5., 0.36), offset=(0.0, 0.0)) #TODO: adjust max speed
 
 @configclass
 class ObservationsCfg:
@@ -232,7 +416,7 @@ class ObservationsCfg:
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel_xy_dot, noise=Gnoise(mean=0.0, std=0.1))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel_yaw_dot, noise=Gnoise(mean=0.0, std=0.1))
         
-        last_actions = ObsTerm(func=mdp.last_action)
+        last_actions = ObsTerm(func=mdp.last_processed_action)
 
         def __post_init__(self) -> None:
             self.enable_corruption = True
@@ -251,7 +435,7 @@ class RandomizationCfg:
         add_base_mass = RandTerm(
             func=mdp.add_body_mass,
             mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot", body_names="base_link"), "mass_range": (-0.5, 0.5)},
+            params={"asset_cfg": SceneEntityCfg("robot", body_names="base_link"), "mass_range": (0.1, 0.5)},
         )
         
         randomize_map = RandTerm(
@@ -272,8 +456,8 @@ class RandomizationCfg:
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="wheel_.*"),
-                "static_friction_range": (0.75, 0.85),
-                "dynamic_friction_range": (0.75, 0.85),
+                "static_friction_range": (0.9, 1),
+                "dynamic_friction_range": (0.9, 1),
                 "restitution_range": (0.0, 0.1),
                 "num_buckets": 64,
             },
@@ -288,7 +472,7 @@ class RandomizationCfg:
                 "pose_range": {
                     "x": (5.0, 5.0),  # X position range from 5 to 5
                     "y": (5.0, 5.0),  # Y position range from 5 to 5
-                    "z": (0.0, 0.15),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "z": (0.001, 0.001),   # Z position range from 0 to 2 (assuming starting on the ground)
                     "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                     "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
                     "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
@@ -543,6 +727,19 @@ class RandomizationCfg:
             }     
         },
     )
+
+        randomize_map = RandTerm(
+            func=mdp.randomize_map,
+            mode="startup",
+            params={
+                "asset_cfg": SceneEntityCfg("robot"),
+                "maps_paths": [f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
+                            f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_2.usd",
+                            f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_3.usd",
+                            f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_4.usd",
+                            f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_5.usd"],
+                },
+        )
     
     else:
         # reset for testing
@@ -552,12 +749,12 @@ class RandomizationCfg:
             params={
                 "asset_cfg": SceneEntityCfg("robot"), 
                 "pose_range": {
-                    "x": (5.0, 5.0),  # X position range from 5 to 5
-                    "y": (5.0, 5.0),  # Y position range from 5 to 5
-                    "z": (0.0, 0.15),   # Z position range from 0 to 2 (assuming starting on the ground)
+                    "x": (1,1),#(5.0, 5.0),  # X position range from 5 to 5
+                    "y": (1,1),#(5.0, 5.0),  # Y position range from 5 to 5
+                    "z": (0, 0),   # Z position range from 0 to 2 (assuming starting on the ground)
                     "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
                     "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                    "yaw": (0.0, 0.0),   # Yaw orientation range from -pi to pi
+                    "yaw": (0, 0),   # Yaw orientation range from -pi to pi
                 }, 
                 "velocity_range": {
                     "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
@@ -574,12 +771,13 @@ class RandomizationCfg:
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="wheel_.*"),
-                "static_friction_range": (0.8, 0.8),
-                "dynamic_friction_range": (0.8, 0.8),
+                "static_friction_range": (0.95, 0.95),
+                "dynamic_friction_range": (0.95, 0.95),
                 "restitution_range": (0.05, 0.05),
                 "num_buckets": 64,
             },
         )
+
         
     reset_robot_joints = RandTerm(
         func=mdp.reset_joints_by_scale,
@@ -605,10 +803,22 @@ class RewardsCfg:
 
     # -- Penalty: Steering angle
     steering_angle_position = RewTerm(
-        func=mdp.joint_pos_target_log,
-        weight=-1.0,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=['rotator_left', 'rotator_right']), "target": 0.0}
+        func=mdp.action_target_log,
+        weight=-0.25,
+        params={"asset_cfg": SceneEntityCfg("robot"), "action_idx": 1 ,"lambda_1": 180/torch.pi, "target": 0.0}
     )
+    
+    # smooth_speed = RewTerm(
+    #     func=mdp.smooth_action_penalty,
+    #     weight=-1,
+    #     params={"asset_cfg": SceneEntityCfg("robot"), "action_idx": 0, "lambda_2": -2e-4, "lambda_3": -1e-4, "omega": 2}
+    # )
+    
+    # smooth_steering = RewTerm(
+    #     func=mdp.smooth_action_penalty,
+    #     weight=-0.25,
+    #     params={"asset_cfg": SceneEntityCfg("robot"), "action_idx": 1}
+    # )
     
     # -- Penalty: Closeness to wall
     # min_lidar_distance = RewTerm(
@@ -622,22 +832,24 @@ class RewardsCfg:
     #     params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.35},
     # )
     
-    # timed_lap_time = RewTerm(
-    #     func=mdp.timed_lap_time,
-    #     weight=1.0,
-    #     params={"asset_cfg": SceneEntityCfg("robot"), "threshold":0.1, "lap_threshold":2.0}
-    # )
+    # if is_inference:
+    #     timed_lap_time = RewTerm(
+    #         func=mdp.timed_lap_time,
+    #         weight=.0001,
+    #         params={"asset_cfg": SceneEntityCfg("robot"), "threshold":0.7, "lap_threshold":0.8}
+    #     )
     
 @configclass
 class TerminationsCfg:
     """Termination terms for the MDP."""
-
+    if not is_inference:
+        collision = DoneTerm(
+            func=mdp.lidar_distance_limit,
+            params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.4},
+        )
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
-    too_close_to_obstacle = DoneTerm(
-        func=mdp.lidar_distance_limit,
-        params={"sensor_cfg": SceneEntityCfg("lidar"), "distance_threshold": 0.4},
-    )
+    
     
     # is_flipped = DoneTerm(
     #     func=mdp.flipped_over, 
@@ -680,12 +892,18 @@ class F1tenthEnvCfg(RLTaskEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
+        self.sim.dt = 1 / 80
         self.episode_length_s = 60
         
         if is_inference:
+            self.decimation = 1
+            self.sim.dt = 1 / 40
             self.episode_length_s *= 10 # 10 minutes
             
         # viewer settings
-        self.viewer.eye = (8.0, 0.0, 5.0)
+        self.viewer.eye = (0.0, 0.0, 30.0)
         # simulation settings
-        self.sim.dt = 1 / 40  # 120
+        
+        # self.sim.use_fabric = False
+
+        

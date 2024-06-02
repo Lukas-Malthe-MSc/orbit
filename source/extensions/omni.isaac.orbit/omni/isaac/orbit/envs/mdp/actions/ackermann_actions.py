@@ -85,6 +85,8 @@ class AckermannAction(ActionTerm):
         # For logging purposes
         self._action_counter = 0
         self._action_buffer = []
+        
+        self.start = 0
 
     """
     Properties.
@@ -108,10 +110,18 @@ class AckermannAction(ActionTerm):
 
     def process_actions(self, actions):
         # store the raw actions
-        self._raw_actions[:] = torch.tanh(actions) # Normalize the actions to [-1, 1]
-        self._processed_actions = self.raw_actions * self._scale + self._offset # Scale and offset the actions
+        self._raw_actions[:] = actions
+        # speed = torch.clip(actions[:, 0], min=-5.0, max=5.0)
+        # steering_angle = torch.clip(actions[:, 1], min=-0.36, max=0.36)
+        # self._processed_actions = torch.stack([speed, steering_angle], dim=1)
+        self._processed_actions = torch.tanh(self.raw_actions) * self._scale + self._offset
+        
+        if self.start < 5:
+            self._processed_actions = self._processed_actions * 0
+            self.start += 1
+        
 
-        # For logging purposes
+        # # For logging purposes
         # self._action_buffer.append(self._processed_actions)
         # self._action_counter += 1
         
@@ -121,7 +131,7 @@ class AckermannAction(ActionTerm):
         #     # convert action buffer to numpy:
         #     action_buffer = torch.stack(self._action_buffer).cpu().numpy()
         #     # write to file
-        #     np.save("data-analysis/data/actions_log_pen.npy", action_buffer)
+        #     np.save("data-analysis/data/actions_log_pen_new.npy", action_buffer)
             
     def apply_actions(self):
 
@@ -145,10 +155,6 @@ class AckermannAction(ActionTerm):
         # Ensure inputs are PyTorch tensors
         target_steering_angle_rad = target_steering_angle_rad.float()
         target_velocity = target_velocity.float()
-        
-        # For testing
-        target_steering_angle_rad = torch.ones(target_steering_angle_rad.shape, device=target_steering_angle_rad.device) * 0#torch.pi/4
-        target_velocity = torch.ones(target_velocity.shape, device=target_velocity.device) * 2
         
         # Calculating the turn radius from the steering angle
         tan_steering = torch.tan(target_steering_angle_rad)

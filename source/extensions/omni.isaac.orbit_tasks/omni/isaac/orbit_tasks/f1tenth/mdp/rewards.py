@@ -9,6 +9,7 @@ import torch
 from typing import TYPE_CHECKING
 
 from rich import print
+import numpy as np
 
 from omni.isaac.orbit.assets import Articulation
 from omni.isaac.orbit.assets import RigidObject
@@ -31,16 +32,28 @@ def joint_pos_target_l2(env: RLTaskEnv, target: float, asset_cfg: SceneEntityCfg
     # print(f"joint_pos_target_l2: {torch.sum(torch.square(joint_pos - target), dim=1)}")
     return torch.sum(torch.square(joint_pos - target), dim=1)
 
-def joint_pos_target_log(env: RLTaskEnv, target: float, asset_cfg: SceneEntityCfg) -> torch.Tensor:
-    """Penalize joint position deviation from a target value."""
+def action_target_log(env: RLTaskEnv, action_idx, lambda_1, target: float, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Penalize action from a target value."""
     # extract the used quantities (to enable type-hinting)
-    asset: Articulation = env.scene[asset_cfg.name]
-    # wrap the joint positions to (-pi, pi)
-    joint_pos = wrap_to_pi(asset.data.joint_pos[:, asset_cfg.joint_ids])
+    action = env.action_manager.action[:, action_idx]
+
+    # f(x) = log10(lambda*|x - target| + 1)
+    return torch.log10(lambda_1 * torch.abs(action - target) + 1)
     
-    # f(x) = log10(|x - target| + 1)
-    # return torch.sum(torch.log10(torch.abs(joint_pos - target) + 1), dim=1)
-    return torch.log10(torch.abs(env.action_manager.action[:, 1:] - target) + 1).squeeze(-1)
+
+def smooth_action_penalty(env: RLTaskEnv, action_idx, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Penalize action from a target value."""
+    action = env.action_manager.action[:, action_idx]
+    prev_action = env.action_manager.prev_action[:, action_idx]
+
+    # Ensure action and prev_action are correctly shaped
+    assert action.shape == prev_action.shape, "Action and previous action must have the same shape"
+    
+    # Compute the penalty for each action individually
+    penalty = ((action - prev_action) ** 2)
+    
+    return penalty
+
 
 def forward_velocity(env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root linear velocity in the asset's root frame."""
@@ -133,42 +146,52 @@ def timed_lap_time(
     """Checks if assets are within their starting locations +- a threshold and prints time elapsed since leaving and returning for each asset."""
     # Access the asset
     asset: Articulation = env.scene[asset_cfg.name]
-
     num_assets = asset.data.root_pos_w.shape[0]  # Assuming this gives the number of individual assets
-
+    
+    if(env.common_step_counter < 5):
+        return torch.zeros(num_assets, device=asset.data.root_pos_w.device) #indicating not started yet
+    
     # Initialize tracking if not already done or if there's a timeout event
-    if asset_cfg.name not in env.starting_positions: #any(env.termination_manager.time_outs)
+    if asset_cfg.name not in env.starting_positions:
         env.starting_positions[asset_cfg.name] = {
             "position": asset.data.root_pos_w[:, :2].clone(),
-            "left_at_step": torch.full((num_assets,), -1, dtype=torch.int64),       # -1 indicates that the asset hasn't left yet
-            "returned_at_step": torch.full((num_assets,), -1, dtype=torch.int64),   # Step counter when the asset last returned within the threshold
-            "is_lap_completed": torch.full((num_assets,), -1, dtype=torch.int64)    # -1 indicates that a lap is not "completable"
+            "left_at_step": torch.full((num_assets,), -1, dtype=torch.int64),
+            "returned_at_step": torch.full((num_assets,), -1, dtype=torch.int64),
+            "is_lap_completed": torch.full((num_assets,), -1, dtype=torch.int64),
+            "lap_times": []  # Buffer to store lap times
         }
-
+    
     tracking_info = env.starting_positions[asset_cfg.name]
-
-    # Compute the difference in positions and the distance moved for each asset
     position_differences = asset.data.root_pos_w[:, :2] - tracking_info["position"]
     distance_moved = torch.norm(position_differences, dim=1)
-
-    # Check if the assets are within the threshold of their starting positions
     within_threshold = distance_moved <= threshold
 
     for i in range(num_assets):
         if tracking_info["is_lap_completed"][i] == -1 and distance_moved[i] > lap_threshold:
             tracking_info["is_lap_completed"][i] = 1
-            # print(f"Car {i} has left limit")
+            print(f"Car {i} has left limit")
 
         if within_threshold[i] and tracking_info["left_at_step"][i] >= 0 and tracking_info["is_lap_completed"][i]:
-            # Calculate and print the elapsed time for assets that have returned
             tracking_info["returned_at_step"][i] = env.common_step_counter
-            time_elapsed = (tracking_info["returned_at_step"][i] - tracking_info["left_at_step"][i]) * env.step_dt
-            # print(f"Asset {i}: Time elapsed since leaving and returning: {time_elapsed} seconds")
-            tracking_info["left_at_step"][i] = -1  # Reset after calculating time
+            time_elapsed = (tracking_info["returned_at_step"][i] - tracking_info["left_at_step"][i]) * env.physics_dt
+            print(f"Asset {i}: Time elapsed since leaving and returning: {time_elapsed} seconds, dt={env.physics_dt}")
+            tracking_info["lap_times"].append(time_elapsed.item())
+            tracking_info["left_at_step"][i] = -1
             tracking_info["is_lap_completed"][i] = -1
 
         elif not within_threshold[i] and tracking_info["left_at_step"][i] < 0:
-            # Mark the step counter for assets that just left the threshold
             tracking_info["left_at_step"][i] = env.common_step_counter
+
+    # Save lap times to .npy file when simulation ends
+    # if env.common_step_counter == 24000/2:
+    #     for key, value in env.starting_positions.items():
+    #         lap_times_array = np.array(value["lap_times"])
+    #         map = "test_track_3_with_fixed_obstacles"
+    #         model = "CNN"
+    #         np.save(f"data-analysis/data/{map}_{model}_rewards.npy", env.reward_buffer)
+    #         np.save(f"data-analysis/data/{map}_{model}_lap_times.npy", lap_times_array)
+    #         print(f"Lap times for {key} saved to {key}_lap_times.npy")
+            
+    # env.reward_buffer.append(env.reward_buf.item())
 
     return within_threshold
