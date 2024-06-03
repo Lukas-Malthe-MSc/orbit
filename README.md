@@ -7,6 +7,14 @@ The project focuses on training a deep reinforcement learning (DRL) agent for au
 # Videos
 Videos of training, inference testing, and deployment testing can be found in the `videos/` directory.
 
+## Video Demonstration
+
+<video width="320" height="240" controls>
+  <source src="videos/Training.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+
 ## Project Directory Structure
 The following describes the extensions made to the Orbit framework for the F1TENTH racing RL environment:
 
