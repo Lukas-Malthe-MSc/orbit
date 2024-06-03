@@ -1,5 +1,5 @@
 ### Master Thesis in Computer Engineering
-This repository contains the primary source code for the Master's thesis in Computer Engineering at Aarhus University.
+This repository contains the primary source code for the Master's thesis in Computer Engineering at Aarhus University, By Lukas Vindbjerg (201906015@post.au.dk) and Malthe Tøttrup (201907882@post.au.dk).
 
 # Deep Reinforcement Learning for Autonomous Racing
 The project focuses on training a deep reinforcement learning (DRL) agent for autonomous racing using the F1TENTH platform. It is based on the Orbit framework, a unified and modular framework for robot learning. Orbit simplifies workflows in robotics research, including RL. The project leverages NVIDIA Isaac Sim for fast and accurate simulation.
