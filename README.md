@@ -6,13 +6,13 @@ The project focuses on training a deep reinforcement learning (DRL) agent for au
 
 # Videos
 
-You can find videos of training, inference testing, and deployment testing in the `videos/` directory.
+You can find videos of training, inference testing, and deployment testing on YouTube.
 
-- [Training](demo_videos/Training.mp4)
-- [Inference with Obstacles](demo_videos/Inference_with_obstacles.mp4)
-- [Inference on Real Track Built in Sim](demo_videos/Real_Sim_Track.mp4)
-- [Real-world Deployment](demo_videos/liveDemo.mp4)
-
+- [Training](https://youtu.be/TdRFvcU_kFM)
+- [Inference with Obstacles](https://youtu.be/LrLx9jP9dXE)
+- [Inference on Real Track Built in Sim](https://youtu.be/hiWdsYpBVAY)
+- [Real-world Deployment](https://youtu.be/qY6PMgR0ZMQ)
+- [Real-world Deployment with Three-Point-Turn](https://youtu.be/XXDu0561zlw)
 
 
 ## Project Directory Structure
