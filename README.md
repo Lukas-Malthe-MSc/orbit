@@ -5,14 +5,14 @@ This repository contains the primary source code for the Master's thesis in Comp
 The project focuses on training a deep reinforcement learning (DRL) agent for autonomous racing using the F1TENTH platform. It is based on the Orbit framework, a unified and modular framework for robot learning. Orbit simplifies workflows in robotics research, including RL. The project leverages NVIDIA Isaac Sim for fast and accurate simulation.
 
 # Videos
-Videos of training, inference testing, and deployment testing can be found in the `videos/` directory.
 
-## Video Demonstration
+You can find videos of training, inference testing, and deployment testing in the `videos/` directory.
 
-<video width="320" height="240" controls>
-  <source src="videos/Training.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+- [Training](videos/Training.mp4)
+- [Inference with Obstacles](videos/Inference_with_obstacles.mp4)
+- [Inference on Real Track Built in Sim](videos/Real_Sim_Track.mp4)
+- [Real-world Deployment](videos/Real_World.mp4)
+
 
 
 ## Project Directory Structure
