@@ -100,7 +100,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
             convention="ros"  # Frame convention
         ),
         draw_lines=False,
-        draw_points=False,
+        draw_points=True,
     )
 
     race_track: AssetBaseCfg = AssetBaseCfg( 
@@ -117,7 +117,7 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
     #     prim_path="{ENV_REGEX_NS}/RaceTrack",
     #     collision_group=0,
     #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/track_1.usd",
+    #         usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/test_track_1.usd",
     #         scale=(.015, .015, .015),
     #     )
     # )

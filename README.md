@@ -1,74 +1,141 @@
-![Example Tasks created with ORBIT](docs/source/_static/tasks.jpg)
+### Master Thesis in Computer Engineering
+This repository contains the primary source code for the Master's thesis in Computer Engineering at Aarhus University.
+
+# Deep Reinforcement Learning for Autonomous Racing
+The project focuses on training a deep reinforcement learning (DRL) agent for autonomous racing using the F1TENTH platform. It is based on the Orbit framework, a unified and modular framework for robot learning. Orbit simplifies workflows in robotics research, including RL. The project leverages NVIDIA Isaac Sim for fast and accurate simulation.
+
+# Videos
+Videos of training, inference testing, and deployment testing can be found in the `videos/` directory.
+
+## Project Directory Structure
+The following describes the extensions made to the Orbit framework for the F1TENTH racing RL environment:
+
+- **`f1tenth.py`**: Defines the robot interface.
+- **`lidar/`**: Contains the LiDAR sensor API implementation.
+- **`ackermann_actions.py`**: Defines the agent's actions based on Ackermann Control.
+- **`f1tenth/`**: Contains the environment setup, including the MDP definition, observations, rewards, and actions for the F1TENTH racing environment.
+
+```mermaid
+graph TD;
+    A[orbit/]
+    B[source/]
+    C[extensions/]
+
+    A --> B
+    B --> C
+
+    D[omni.isaac.orbit_assets/]
+    D --> E[omni/isaac/orbit_assets/]
+
+    E --> H[f1tenth.py]
+
+    I[omni.isaac.orbit/]
+    I --> J[omni/isaac/orbit/]
+ 
+    J --> M[sensors/]
+    M --> N[lidar/]
+    J --> O[envs/mdp/actions/]
+    O --> R[ackermann_actions.py]
+
+    S[omni.isaac.orbit_tasks/]
+    S --> T[omni/isaac/orbit_tasks/]
+    T --> W[f1tenth/]
+
+    C --> D
+    C --> I
+    C --> S
+
+
+    classDef red fill:#f96,stroke:#333,stroke-width:2px;
+    class R red;
+    class W red;
+    class H red;
+    class N red;
+
+```
+A few submodules have been directly added to the repository to collect everything in one place. The `f1tenth_assets/` submodule contains the USD assets used in the project, such as the robot model and race tracks. The `actor_critic_lidar_cnn.py` contains the code for the developed LiDAR-based CNN architecture.
+
+```mermaid
+graph TD;
+    A[orbit/]
+
+
+   X1[rsl_rl/rsl_rl/modules/]
+
+   X4[actor_critic_lidar_cnn.py]
+   X1 --> X4
+
+   Y1[f1tent_assets/]
+
+    A -.-> X1
+      A -.-> Y1
+
+    classDef red fill:#f96,stroke:#333,stroke-width:2px;
+    class R red;
+    class W red;
+    class H red;
+    class N red;
+    class X4 red;
+    class Y1 red;
+```
+## Installation and Setup
+It is recommended to use the docker setup by initializing the docker:
+   
+   ```bash
+   docker/container.sh start
+   ```
+This requires the NVIDIA Container Toolkit to be installed on the host machine. It has been tested with Nvidia driver 535.171.04. The Docker setup will automatically install the required dependencies and set up the environment for the project.
+
+You can also set up the environment manually by following the setup steps specified on the Orbit docs website: Isaac Lab Setup.
+
+However, to use the LiDAR sensor in headless mode, you must add a dependency to Isaac Sim. Follow these steps:
+
+
+1. Edit following file:
+
+    ```bash
+    gedit PATH_TO_ISAACSIM/isaac-sim/apps/omni.isaac.sim.python.gym.headless.kit
+    ```
+
+2. Add the following dependency to the bottom of the file.
+
+    ```bash
+    "omni.isaac.range_sensor" = {}
+    ```
+This will tell Isaac Sim to load the range sensor extension when the headless kit is loaded.
+
+### Training the Agent
+To train the reinforcement learning agent for the F1TENTH racing environment, use the following command:
+
+Train commmand:
+```
+./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
+
+```
+
+- **`--task F1tenth-v0`**: Specifies the task environment for the training.
+- **`--headless`**: Runs the simulation without rendering the GUI, which can speed up training.
+- **`--offscreen_render`**: Enables offscreen rendering which is needed for the LiDAR.
+- **`--num_envs`**: Specifies the number of parallel environments to be used for training.
+
+### Running Inference
+To run inference with a trained model, use the following example command:
+
+
+```
+./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 16 --load_run 2024-05-16_14-38-55 --checkpoint model_999.pt
+```
+
+
+- **`--task F1tenth-v0`**: Specifies the task environment for the inference.
+- **`--num_envs 16`**: Sets the number of environments for inference.
+- **`--load_run 2024-05-16_14-38-55`**: Indicates the specific training run to load. Replace the date and time with the appropriate run identifier.
+- **`--checkpoint model_999.pt`**: Specifies the checkpoint file to load the trained model. Replace `model_999.pt` with the path to the desired model checkpoint.
+
+These commands will train and test your DRL agent within the F1TENTH environment using the Orbit framework. Make sure to replace the placeholders with your actual run identifiers and model checkpoints.
 
 ---
 
-# Orbit
+# Original `README.md`
 
-[![IsaacSim](https://img.shields.io/badge/IsaacSim-2023.1.1-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
-[![Python](https://img.shields.io/badge/python-3.10-blue.svg)](https://docs.python.org/3/whatsnew/3.10.html)
-[![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/20.04/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
-[![Docs status](https://img.shields.io/badge/docs-passing-brightgreen.svg)](https://isaac-orbit.github.io/orbit)
-[![License](https://img.shields.io/badge/license-BSD--3-yellow.svg)](https://opensource.org/licenses/BSD-3-Clause)
-
-<!-- TODO: Replace docs status with workflow badge? Link: https://github.com/isaac-orbit/orbit/actions/workflows/docs.yaml/badge.svg -->
-
-**Orbit** is a unified and modular framework for robot learning that aims to simplify common workflows
-in robotics research (such as RL, learning from demonstrations, and motion planning). It is built upon
-[NVIDIA Isaac Sim](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html) to leverage the latest
-simulation capabilities for photo-realistic scenes and fast and accurate simulation.
-
-Please refer to our [documentation page](https://isaac-orbit.github.io/orbit) to learn more about the
-installation steps, features, and tutorials.
-
-## 🎉 Announcement (22.12.2023)
-
-We're excited to announce merging of our latest development branch into the main branch! This update introduces
-several improvements and fixes to enhance the modularity and user-friendliness of the framework. We have added
-several new environments, especially for legged locomotion, and are in the process of adding new environments.
-
-Feel free to explore the latest changes and updates. We appreciate your ongoing support and contributions!
-
-For more details, please check the post here: [#106](https://github.com/NVIDIA-Omniverse/Orbit/discussions/106)
-
-## Contributing to Orbit
-
-We wholeheartedly welcome contributions from the community to make this framework mature and useful for everyone.
-These may happen as bug reports, feature requests, or code contributions. For details, please check our
-[contribution guidelines](https://isaac-orbit.github.io/orbit/source/refs/contributing.html).
-
-## Troubleshooting
-
-Please see the [troubleshooting](https://isaac-orbit.github.io/orbit/source/refs/troubleshooting.html) section for
-common fixes or [submit an issue](https://github.com/NVIDIA-Omniverse/orbit/issues).
-
-For issues related to Isaac Sim, we recommend checking its [documentation](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/overview.html)
-or opening a question on its [forums](https://forums.developer.nvidia.com/c/agx-autonomous-machines/isaac/67).
-
-## Support
-
-* Please use GitHub [Discussions](https://github.com/NVIDIA-Omniverse/Orbit/discussions) for discussing ideas, asking questions, and requests for new features.
-* Github [Issues](https://github.com/NVIDIA-Omniverse/orbit/issues) should only be used to track executable pieces of work with a definite scope and a clear deliverable. These can be fixing bugs, documentation issues, new features, or general updates.
-
-## Acknowledgement
-
-NVIDIA Isaac Sim is available freely under [individual license](https://www.nvidia.com/en-us/omniverse/download/). For more information about its license terms, please check [here](https://docs.omniverse.nvidia.com/app_isaacsim/common/NVIDIA_Omniverse_License_Agreement.html#software-support-supplement).
-
-Orbit framework is released under [BSD-3 License](LICENSE). The license files of its dependencies and assets are present in the [`docs/licenses`](docs/licenses) directory.
-
-## Citation
-
-Please cite [this paper](https://arxiv.org/abs/2301.04195) if you use this framework in your work:
-
-```text
-@article{mittal2023orbit,
-   author={Mittal, Mayank and Yu, Calvin and Yu, Qinxi and Liu, Jingzhou and Rudin, Nikita and Hoeller, David and Yuan, Jia Lin and Singh, Ritvik and Guo, Yunrong and Mazhar, Hammad and Mandlekar, Ajay and Babich, Buck and State, Gavriel and Hutter, Marco and Garg, Animesh},
-   journal={IEEE Robotics and Automation Letters},
-   title={Orbit: A Unified Simulation Framework for Interactive Robot Learning Environments},
-   year={2023},
-   volume={8},
-   number={6},
-   pages={3740-3747},
-   doi={10.1109/LRA.2023.3270034}
-}
-```
+The Original Orbit `README.md` is available [here](README_orbit.md).
