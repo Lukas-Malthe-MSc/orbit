@@ -59,5 +59,3 @@ _build
 # !/logs/rsl_rl/f1tenth/
 # !/logs/rsl_rl/f1tenth/*
 **/recordings/*
-
-!videos/

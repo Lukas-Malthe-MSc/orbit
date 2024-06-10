@@ -3,13 +3,13 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-import math
 import torch
 from omni.isaac.orbit.sensors.lidar.lidar_cfg import LidarCfg
 from rich import print
+from .env_utils.boxes_utils import create_box_configs
 
 import omni.isaac.orbit.sim as sim_utils
-from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
+from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
 from omni.isaac.orbit.managers import ObservationGroupCfg as ObsGroup
 from omni.isaac.orbit.managers import ObservationTermCfg as ObsTerm
@@ -19,16 +19,13 @@ from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.orbit.scene import InteractiveSceneCfg
 from omni.isaac.orbit.utils import configclass
-from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from omni.isaac.orbit.utils.noise import AdditiveGaussianNoiseCfg as Gnoise
-from omni.isaac.orbit.terrains import TerrainImporterCfg
 import omni.isaac.orbit_tasks.f1tenth.mdp as mdp
-from omni.isaac.orbit.managers import CurriculumTermCfg as CurrTerm
 ##
 # Pre-defined configs
 ##
 from omni.isaac.orbit_assets.f1tenth import F1TENTH_CFG  # isort:skip
-from omni.isaac.orbit.terrains.config.cones import CONE_TERRAINS_CFG  # isort: skip
+
 ##
 # Scene definition
 ##
@@ -53,7 +50,7 @@ LSTM
 """
 
 # For now this has to be done manually
-is_inference = True
+is_inference = False
 test_track = 0
 @configclass
 class F1tenthSceneCfg(InteractiveSceneCfg):
@@ -103,279 +100,285 @@ class F1tenthSceneCfg(InteractiveSceneCfg):
         draw_points=True,
     )
 
-    race_track: AssetBaseCfg = AssetBaseCfg( 
-        prim_path="{ENV_REGEX_NS}/RaceTrack",
-        collision_group=0,
-        spawn=sim_utils.UsdFileCfg(
-            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/validation_track.usd",
-            scale=(.01, .01, .01),
-        )
-    )
-
-    
     # race_track: AssetBaseCfg = AssetBaseCfg( 
     #     prim_path="{ENV_REGEX_NS}/RaceTrack",
     #     collision_group=0,
     #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/test_track_1.usd",
-    #         scale=(.015, .015, .015),
+    #         usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/validation_track.usd",
+    #         scale=(.01, .01, .01),
     #     )
     # )
+
+    
+    race_track: AssetBaseCfg = AssetBaseCfg( 
+        prim_path="{ENV_REGEX_NS}/RaceTrack",
+        collision_group=0,
+        spawn=sim_utils.UsdFileCfg(
+            usd_path= f"{current_working_directory}/f1tenth_assets/omniverse/maps/test_track_1.usd",
+            scale=(.015, .015, .015),
+        )
+    )
     
     if not is_inference:
-        box1: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box1",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30), 
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
         
-        box2: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box2",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
+        box0, box1, box2, box3, box4, box5, box6, box7, box8, box9 = create_box_configs()
         
-        box3: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box3",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
 
-        box4: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box4",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
+        # box1: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box1",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30), 
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
         
-        box5: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box5",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
+        # print(box1)
         
-        box6: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box6",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
+        # box2: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box2",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
         
-        box7: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box7",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
+        # box3: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box3",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
+
+        # box4: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box4",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
         
-        box8: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box8",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
+        # box5: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box5",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
         
-        box9: RigidObjectCfg = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/box9",
-            spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                    rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                    collision_props=sim_utils.CollisionPropertiesCfg()),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                    rot=(1.0, 0.0, 0.0, 0.0)),
-        )
+        # box6: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box6",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
         
-        box10: RigidObjectCfg = RigidObjectCfg(
-        prim_path="{ENV_REGEX_NS}/box10",
-        spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                collision_props=sim_utils.CollisionPropertiesCfg()),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
-                                                rot=(1.0, 0.0, 0.0, 0.0)),
-    )
+        # box7: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box7",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
+        
+        # box8: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box8",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
+        
+        # box9: RigidObjectCfg = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/box9",
+        #     spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                             rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                             collision_props=sim_utils.CollisionPropertiesCfg()),
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                             rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
+        
+        # box10: RigidObjectCfg = RigidObjectCfg(
+        # prim_path="{ENV_REGEX_NS}/box10",
+        # spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+        #                         rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+        #                         collision_props=sim_utils.CollisionPropertiesCfg()),
+        # init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.25),
+        #                                         rot=(1.0, 0.0, 0.0, 0.0)),
+        # )
 
-    else:
-        if test_track == 1:
-            box1: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box1",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-5.2, -2.7, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    # else:
+    #     if test_track == 1:
+    #         box1: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box1",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-5.2, -2.7, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box2: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box2",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(4.3, 3.8, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box2: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box2",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(4.3, 3.8, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box3: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box3",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-1.4, 5.1, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box3: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box3",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-1.4, 5.1, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box4: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box4",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(2.7, -5.6, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box4: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box4",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(2.7, -5.6, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box5: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box5",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-3.3, 1.2, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box5: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box5",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-3.3, 1.2, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box6: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box6",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(0.5, -4.9, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
-        if test_track == 2:
-            box1: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box1",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-4.3, -3.2, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box6: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box6",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.5, -4.9, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
+    #     if test_track == 2:
+    #         box1: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box1",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-4.3, -3.2, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box2: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box2",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(2.3, 5, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box2: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box2",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(2.3, 5, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box3: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box3",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-2.1, 2.9, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box3: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box3",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-2.1, 2.9, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box4: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box4",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(3.0, -4.2, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box4: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box4",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(3.0, -4.2, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box5: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box5",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-3.8, 0.5, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box5: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box5",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-3.8, 0.5, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box6: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box6",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(1.4, -4.1, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
-        if test_track == 3:
-            box1: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box1",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-5.1, 4.4, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box6: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box6",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(1.4, -4.1, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
+    #     if test_track == 3:
+    #         box1: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box1",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-5.1, 4.4, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box2: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box2",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(4.2, -3.7, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box2: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box2",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(4.2, -3.7, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box3: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box3",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-2.8, 5.6, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box3: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box3",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-2.8, 5.6, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box4: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box4",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(5.5, 4.5, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box4: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box4",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(5.5, 4.5, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box5: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box5",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(0.3, -5.5, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box5: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box5",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(0.3, -5.5, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
-            box6: RigidObjectCfg = RigidObjectCfg(
-                prim_path="{ENV_REGEX_NS}/box6",
-                spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
-                                        rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
-                                        collision_props=sim_utils.CollisionPropertiesCfg()),
-                init_state=RigidObjectCfg.InitialStateCfg(pos=(-4.7, -1.6, 0.25),
-                                                        rot=(1.0, 0.0, 0.0, 0.0)),
-            )
+    #         box6: RigidObjectCfg = RigidObjectCfg(
+    #             prim_path="{ENV_REGEX_NS}/box6",
+    #             spawn=sim_utils.CuboidCfg(size=(0.35, 0.32, 0.30),
+    #                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(rigid_body_enabled=True),
+    #                                     collision_props=sim_utils.CollisionPropertiesCfg()),
+    #             init_state=RigidObjectCfg.InitialStateCfg(pos=(-4.7, -1.6, 0.25),
+    #                                                     rot=(1.0, 0.0, 0.0, 0.0)),
+    #         )
 
 
 ##
@@ -704,29 +707,29 @@ class RandomizationCfg:
             },
         )
 
-        randomize_obstacle10_position = RandTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("box10"), 
-            "pose_range": {
-                "x": (-6.5, 6.5),  # X position range from -5 to 5
-                "y": (-6.5, 6.5),  # Y position range from -5 to 5
-                "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
-                "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
-                "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
-                "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
-            }, 
-            "velocity_range": {
-                "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
-                "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
-                "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
-                "roll": (0.0, 0.0),  # Roll angular velocity range
-                "pitch": (0.0, 0.0), # Pitch angular velocity range
-                "yaw": (0.0, 0.0),   # Yaw angular velocity range
-            }     
-        },
-    )
+    #     randomize_obstacle10_position = RandTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("box10"), 
+    #         "pose_range": {
+    #             "x": (-6.5, 6.5),  # X position range from -5 to 5
+    #             "y": (-6.5, 6.5),  # Y position range from -5 to 5
+    #             "z": (0.0, 0.75),   # Z position range from 0 to 2 (assuming starting on the ground)
+    #             "roll": (0.0, 0.0),  # Roll orientation range from -pi to pi
+    #             "pitch": (0.0, 0.0), # Pitch orientation range from -pi to pi
+    #             "yaw": (-3.14, 3.14),   # Yaw orientation range from -pi to pi
+    #         }, 
+    #         "velocity_range": {
+    #             "x": (0.0, 0.0),  # X linear velocity range from -1 to 1
+    #             "y": (0.0, 0.0),  # Y linear velocity range from -1 to 1
+    #             "z": (0.0, 0.0),  # Z linear velocity range from -1 to 1 (upwards/downwards movement)
+    #             "roll": (0.0, 0.0),  # Roll angular velocity range
+    #             "pitch": (0.0, 0.0), # Pitch angular velocity range
+    #             "yaw": (0.0, 0.0),   # Yaw angular velocity range
+    #         }     
+    #     },
+    # )
 
         randomize_map = RandTerm(
             func=mdp.randomize_map,
