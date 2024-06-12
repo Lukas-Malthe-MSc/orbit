@@ -247,6 +247,9 @@ class AckermannActionCfg(ActionTermCfg):
     offset: tuple[float, float] = (0.0, 0.0)
     """Offset factors for the action components: (velocity_offset, steering_angle_offset). Defaults to (0.0, 0.0)."""
     
+    bounding_strategy: str | None = "tanh"
+    """The strategy to bound the action values. Defaults to "tanh"."""
+    
     base_length: float = 1.0
     """The length of the vehicle's base. Defaults to 1.0."""
     
@@ -255,6 +258,8 @@ class AckermannActionCfg(ActionTermCfg):
     
     wheel_radius: float = 1.0
     """The radius of the vehicle's wheels. Defaults to 1.0."""
+    
+    
     
     
     

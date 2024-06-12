@@ -16,11 +16,6 @@ from rich import print
 import omni.kit.commands
 import omni.usd
 from omni.isaac.core.prims import XFormPrimView
-
-# from omni.isaac.core.utils.extensions import enable_extension
-
-# enable_extension("omni.isaac.range_sensor")  # required by OIGE
-# enable_extension("omni.isaac.RangeSensorSchema")  # required by OIGE
 from omni.isaac.range_sensor import _range_sensor
 import omni.isaac.RangeSensorSchema as RangeSensorSchema
 from omni.isaac.orbit.utils.array import convert_to_torch
@@ -35,6 +30,7 @@ if TYPE_CHECKING:
 
 
 class Lidar(SensorBase):
+    #TODO: Provide correct documentation here
     r"""The camera sensor for acquiring visual data.
 
     This class wraps over the `UsdGeom Camera`_ for providing a consistent API for acquiring visual data.
@@ -67,6 +63,7 @@ class Lidar(SensorBase):
 
     cfg: LidarCfg
     """The configuration parameters."""
+    
     # UNSUPPORTED_TYPES: set[str] = {"bounding_box_2d_tight", "bounding_box_2d_loose", "bounding_box_3d"}
     """The set of sensor types that are not supported by the camera class."""
 

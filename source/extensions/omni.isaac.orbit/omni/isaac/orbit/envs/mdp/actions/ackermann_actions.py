@@ -21,33 +21,48 @@ if TYPE_CHECKING:
 
 
 class AckermannAction(ActionTerm):
-    r"""Non-holonomic action that maps a two dimensional action to the velocity of the robot in
-    the x, y and yaw directions.
+    r"""
+    Action term for controlling Ackermann steering vehicles.
 
-    This action term helps model a skid-steer robot base. The action is a 2D vector which comprises of the
-    forward velocity :math:`v_{B,x}` and the turning rate :\omega_{B,z}: in the base frame. Using the current
-    base orientation, the commands are transformed into dummy joint velocity targets as:
+    This class encapsulates the logic required to process and apply actions for an Ackermann steering vehicle
+    in a simulation environment. It handles the transformation of raw actions, including clipping or applying
+    a tanh function to bound the actions within a specified range, and computes the appropriate steering angles
+    and wheel velocities.
 
-    .. math::
+    Attributes:
+    ----------
+    cfg : actions_cfg.AckermannActionCfg
+        The configuration of the action term, including parameters like scaling, offset, and bounding strategy.
+    _asset : Articulation
+        The articulation asset on which the action term is applied.
+    _scale : torch.Tensor
+        The scaling factor applied to the input action. Shape is (1, 2).
+    _offset : torch.Tensor
+        The offset applied to the input action. Shape is (1, 2).
+    _bounding_strategy : str | None
+        The strategy used to bound the actions. Can be 'clip' or 'tanh'. If None, no bounding is applied.
+    _raw_actions : torch.Tensor
+        Tensor to store raw actions before processing.
+    _processed_actions : torch.Tensor
+        Tensor to store processed actions after applying the bounding strategy, scaling, and offset.
+    base_length : torch.Tensor
+        The length of the vehicle base.
+    base_width : torch.Tensor
+        The width of the vehicle base.
+    wheel_rad : torch.Tensor
+        The radius of the vehicle wheels.
 
-        \dot{q}_{0, des} &= v_{B,x} \cos(\theta) \\
-        \dot{q}_{1, des} &= v_{B,x} \sin(\theta) \\
-        \dot{q}_{2, des} &= \omega_{B,z}
+    Methods:
+    -------
+    process_actions(actions):
+        Processes the raw actions based on the bounding strategy, scaling, and offset.
 
-    where :math:`\theta` is the yaw of the 2-D base. Since the base is simulated as a dummy joint, the yaw is directly
-    the value of the revolute joint along z, i.e., :math:`q_2 = \theta`.
+    apply_actions():
+        Applies the processed actions to the articulation asset.
 
-    .. note::
-        The current implementation assumes that the base is simulated with three dummy joints (prismatic joints along x
-        and y, and revolute joint along z). This is because it is easier to consider the mobile base as a floating link
-        controlled by three dummy joints, in comparison to simulating wheels which is at times is tricky because of
-        friction settings.
-
-        However, the action term can be extended to support other base configurations as well.
-
-    .. tip::
-        For velocity control of the base with dummy mechanism, we recommend setting high damping gains to the joints.
-        This ensures that the base remains unperturbed from external disturbances, such as an arm mounted on the base.
+    calculate_ackermann_angles_and_velocities(target_steering_angle_rad, target_velocity):
+        Calculates the steering angles for the left and right front wheels and the wheel velocities based on the
+        Ackermann steering geometry.
     """
 
     cfg: actions_cfg.AckermannActionCfg
@@ -58,6 +73,8 @@ class AckermannAction(ActionTerm):
     """The scaling factor applied to the input action. Shape is (1, 2)."""
     _offset: torch.Tensor
     """The offset applied to the input action. Shape is (1, 2)."""
+    _bounding_strategy: str | None
+    """The strategy used to bound the actions. Can be 'clip' or 'tanh'. If None, no bounding is applied."""
 
     def __init__(self, cfg: actions_cfg.AckermannActionCfg, env: BaseEnv):
         super().__init__(cfg, env)
@@ -73,6 +90,7 @@ class AckermannAction(ActionTerm):
         # Action scaling and offset
         self._scale = torch.tensor(cfg.scale, device=self.device, dtype=torch.float32)
         self._offset = torch.tensor(cfg.offset, device=self.device, dtype=torch.float32)
+        self._bounding_strategy = cfg.bounding_strategy
 
         # Initialize tensors for actions
         self._raw_actions = torch.zeros(env.num_envs, self.action_dim, device=self.device)  # Placeholder for [velocity, steering_angle]
@@ -81,12 +99,6 @@ class AckermannAction(ActionTerm):
         self.base_width = torch.tensor(cfg.base_width, device=self.device)
         self.wheel_rad = torch.tensor(cfg.wheel_radius, device=self.device)
         
-        
-        # For logging purposes
-        self._action_counter = 0
-        self._action_buffer = []
-        
-        self.start = 0
 
     """
     Properties.
@@ -111,53 +123,62 @@ class AckermannAction(ActionTerm):
     def process_actions(self, actions):
         # store the raw actions
         self._raw_actions[:] = actions
-        # speed = torch.clip(actions[:, 0], min=-5.0, max=5.0)
-        # steering_angle = torch.clip(actions[:, 1], min=-0.36, max=0.36)
-        # self._processed_actions = torch.stack([speed, steering_angle], dim=1)
-        self._processed_actions = torch.tanh(self.raw_actions) * self._scale + self._offset
-        
-        if self.start < 5:
-            self._processed_actions = self._processed_actions * 0
-            self.start += 1
-        
 
-        # # For logging purposes
-        # self._action_buffer.append(self._processed_actions)
-        # self._action_counter += 1
-        
-        # if self._action_counter % 100 == 0:
-        #     print(f"Action buffer size: {len(self._action_buffer)}")
-        #     self._action_counter = 0
-        #     # convert action buffer to numpy:
-        #     action_buffer = torch.stack(self._action_buffer).cpu().numpy()
-        #     # write to file
-        #     np.save("data-analysis/data/actions_log_pen_new.npy", action_buffer)
+        if self._bounding_strategy == 'clip':
+            self._processed_actions = torch.clip(actions, min=-1.0, max=1.0) * self._scale + self._offset
             
+        elif self._bounding_strategy == 'tanh':
+            self._processed_actions = torch.tanh(actions) * self._scale + self._offset
+            
+        else:
+            self._processed_actions = actions * self._scale + self._offset
+            
+
     def apply_actions(self):
 
-        left_rotator_angle, right_rotator_angle, wheel_speeds = self. calculate_ackermann_angles_and_velocities(
-            target_velocity=self.processed_actions[:, 0],  # Velocity for all cars
-            target_steering_angle_rad=self.processed_actions[:, 1] # Steering angle for all cars
+        left_rotator_angle, right_rotator_angle, wheel_speeds = self._calculate_ackermann_angles_and_velocities(
+            target_velocity=self.processed_actions[:, 0], # Velocity for all cars
+            target_steering_angle=self.processed_actions[:, 1] # Steering angle for all cars
         )
-        wheel_angles = torch.stack([left_rotator_angle, right_rotator_angle], dim=1)
+        front_wheel_angles = torch.stack([left_rotator_angle, right_rotator_angle], dim=1)
 
         self._asset.set_joint_velocity_target(wheel_speeds, joint_ids=self._wheel_ids)
-        self._asset.set_joint_position_target(wheel_angles, joint_ids=self._steering_ids)
+        self._asset.set_joint_position_target(front_wheel_angles, joint_ids=self._steering_ids)
 
 
     
     
-    def calculate_ackermann_angles_and_velocities(self, target_steering_angle_rad, target_velocity):
+    def _calculate_ackermann_angles_and_velocities(self, target_steering_angle, target_velocity):
+        """
+        Calculates the steering angles for the left and right front wheels and the wheel velocities based on the
+        Ackermann steering geometry.
+
+        Parameters:
+        ----------
+        target_steering_angle : torch.Tensor
+            Target steering angles in radians for each environment.
+        target_velocity : torch.Tensor
+            Target velocities for each environment in meters/second.
+
+        Returns:
+        -------
+        delta_left : torch.Tensor
+            Steering angles for the left front wheels.
+        delta_right : torch.Tensor
+            Steering angles for the right front wheels.
+        wheel_speeds : torch.Tensor
+            Speeds for each wheel.
+        """
         L = self.base_length
         W = self.base_width
         wheel_radius = self.wheel_rad
         
         # Ensure inputs are PyTorch tensors
-        target_steering_angle_rad = target_steering_angle_rad.float()
+        target_steering_angle = target_steering_angle.float()
         target_velocity = target_velocity.float()
         
         # Calculating the turn radius from the steering angle
-        tan_steering = torch.tan(target_steering_angle_rad)
+        tan_steering = torch.tan(target_steering_angle)
         R = torch.where(tan_steering == 0, torch.full_like(tan_steering, 1e6), L / tan_steering)
         
         # Calculate the steering angles for the left and right front wheels in radians
@@ -179,75 +200,3 @@ class AckermannAction(ActionTerm):
         wheel_speeds = torch.stack([v_back_left, v_back_right, v_front_left, v_front_right], dim=1)
 
         return delta_left, delta_right, wheel_speeds
-"""
-    def calculate_ackermann_angles_and_velocities(self, target_steering_angle_rad, target_velocity):
-        L = self.base_length
-        W = self.base_width
-        wheel_radius = self.wheel_rad
-        
-        # Ensure inputs are PyTorch tensors
-        target_steering_angle_rad = target_steering_angle_rad.float()
-        target_velocity = target_velocity.float()
-        
-        # Calculating the turn radius from the steering angle
-        tan_steering = torch.tan(target_steering_angle_rad)
-        R = torch.where(tan_steering == 0, torch.full_like(tan_steering, 1e6), L / tan_steering)
-        
-        # Calculate the steering angles for the left and right front wheels in radians
-        delta_left = torch.atan(L / (R - W / 2))
-        delta_right = torch.atan(L / (R + W / 2))
-        
-        # Assuming the rear wheels follow the path's radius adjusted for their position
-        R_rear_left = torch.sqrt((R - W/2)**2 + L**2)
-        R_rear_right = torch.sqrt((R + W/2)**2 + L**2)
-        
-        # Velocity adjustment based on wheel's distance from the IC
-        v_front_left = target_velocity * R_rear_left / (torch.abs(R)*wheel_radius)
-        v_front_right = target_velocity * R_rear_right / (torch.abs(R)*wheel_radius)
-        
-        v_back_left = target_velocity * (R - W/2) / (R*wheel_radius)
-        v_back_right = target_velocity * (R + W/2) / (R*wheel_radius)
-        
-        # Calculate target rotation for each wheel based on its velocity
-        wheel_speeds = torch.stack([v_back_left, v_back_right, v_front_left, v_front_right], dim=1)
-        print(wheel_speeds)
-
-        return delta_left, delta_right, wheel_speeds
-"""
-
-"""
-    def calculate_ackermann_angles_and_velocities(self, target_steering_angle_rad, target_velocity):
-        L = self.base_length
-        W = self.base_width
-        wheel_radius = self.wheel_rad
-        
-        # Ensure inputs are PyTorch tensors
-        target_steering_angle_rad = target_steering_angle_rad.float()
-        target_velocity = target_velocity.float()
-        
-        # Calculating the turn radius from the steering angle
-        tan_steering = torch.tan(target_steering_angle_rad)
-        R = torch.where(tan_steering == 0, torch.full_like(tan_steering, 1e6), L / tan_steering)
-
-        
-        # Calculate the steering angles for the left and right front wheels in radians
-        delta_left = torch.atan(L / (R - W / 2))
-        delta_right = torch.atan(L / (R + W / 2))
-        
-        # Assuming the rear wheels follow the path's radius adjusted for their position
-        R_rear_left = torch.sqrt((R - W/2)**2 + L**2)
-        R_rear_right = torch.sqrt((R + W/2)**2 + L**2)
-        
-        # Velocity adjustment based on wheel's distance from the IC
-        v_front_left = target_velocity * (R - W/2) / R
-        v_front_right = target_velocity * (R + W/2) / R
-        
-        v_back_left = target_velocity * R_rear_left / torch.abs(R)
-        v_back_right = target_velocity * R_rear_right / torch.abs(R)
-        
-        # Calculate target rotation for each wheel based on its velocity
-        wheel_speeds = torch.stack([v_back_left, v_back_right, v_front_left, v_front_right], dim=1) / wheel_radius
-        
-        return delta_left, delta_right, wheel_speeds
-
-"""
