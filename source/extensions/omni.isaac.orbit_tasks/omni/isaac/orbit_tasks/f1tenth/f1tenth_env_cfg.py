@@ -24,15 +24,9 @@ current_working_directory = Path.cwd()
 Train commmand:
 ./orbit.sh -p source/standalone/workflows/rsl_rl/train.py --task F1tenth-v0 --headless --offscreen_render --num_envs 4096
 
-Play command:
-CNN
-./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-05-16_14-38-55 --checkpoint model_999.pt
+./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 16 --load_run your-run-timestamp --checkpoint model_x.pt
 
-MLP
-./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-05-16_19-22-56 --checkpoint model_999.pt
 
-LSTM
-./orbit.sh -p source/standalone/workflows/rsl_rl/play.py --task F1tenth-v0 --num_envs 1 --load_run 2024-05-16_17-58-21 --checkpoint model_999.pt
 
 TODO: Remember to change the neural network type in the rsl_rl_ppo_cfg.py file
 """

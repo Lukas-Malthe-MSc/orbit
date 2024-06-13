@@ -20,6 +20,7 @@ from omni.isaac.range_sensor import _range_sensor
 import omni.isaac.RangeSensorSchema as RangeSensorSchema
 from omni.isaac.orbit.utils.array import convert_to_torch
 from omni.isaac.orbit.utils.math import quat_from_matrix
+from tensordict import TensorDict
 
 from ..sensor_base import SensorBase
 from .lidar_data import LidarData
@@ -33,8 +34,8 @@ class Lidar(SensorBase):
     #TODO: Provide correct documentation here
     r"""The camera sensor for acquiring visual data.
 
-    This class wraps over the `UsdGeom Camera`_ for providing a consistent API for acquiring visual data.
-    It ensures that the camera follows the ROS convention for the coordinate system.
+    This class wraps over the `_range_sensor` for providing a consistent API for acquiring visual lidar data.
+    It ensures that the Lidar follows the ROS convention for the coordinate system.
 
     Summarizing from the `replicator extension`_, the following sensor types are supported:
 
@@ -56,8 +57,8 @@ class Lidar(SensorBase):
         In case you need to work with these sensor types, we recommend using the single camera implementation
         from the :mod:`omni.isaac.orbit.compat.camera` module.
 
-    .. _replicator extension: https://docs.omniverse.nvidia.com/prod_extensions/prod_extensions/ext_replicator/annotators_details.html#annotator-output
-    .. _USDGeom Camera: https://graphics.pixar.com/usd/docs/api/class_usd_geom_camera.html
+    .. _range_sensor extension: https://docs.omniverse.nvidia.com/py/isaacsim/source/extensions/omni.isaac.range_sensor/docs/index.html
+    .. Lidar Examples: https://docs.omniverse.nvidia.com/isaacsim/latest/advanced_tutorials/tutorial_advanced_range_sensor_lidar.html
 
     """
 
@@ -111,7 +112,6 @@ class Lidar(SensorBase):
         return (
             f"Lidar @ '{self.cfg.prim_path}': \n"
             f"\tupdate period (s): {self.cfg.update_period}\n"
-            # f"\tshape        : {self.image_shape}\n"
             f"\tnumber of sensors : {self._view.count}"
         )
 
@@ -177,6 +177,15 @@ class Lidar(SensorBase):
             if self.cfg.draw_points is not None:
                 lidar.GetDrawPointsAttr().Set(self.cfg.draw_points)
                 
+            if self.cfg.high_lod is not None:
+                lidar.GetHighLodAttr().Set(self.cfg.high_lod)
+                
+            if self.cfg.yaw_offset is not None:
+                lidar.GetYawOffsetAttr().Set(self.cfg.yaw_offset)
+                
+            if self.cfg.enable_semantics is not None:
+                lidar.GetEnableSemanticsAttr().Set(self.cfg.enable_semantics)
+                
 
             # Additional LiDAR-specific properties can be set here as needed.
 
@@ -184,6 +193,7 @@ class Lidar(SensorBase):
     Operations - Set pose.
     """
 
+    #TODO: Check if this method does anything 
     def set_world_poses(
         self,
         positions: torch.Tensor | None = None,
@@ -317,7 +327,7 @@ class Lidar(SensorBase):
     # TODO : Make this check
     def _is_valid_lidar_prim(self, prim):
         # Checking if a USD prim is a valid LiDAR sensor in simulation environment.
-        return True
+        return self._li.is_lidar_sensor(prim)
 
 
     def _update_buffers_impl(self, env_ids: Sequence[int]):
@@ -327,9 +337,34 @@ class Lidar(SensorBase):
         self._update_poses(env_ids)
 
         for index in env_ids:
+            azimuth = self._li.get_azimuth_data(self._view.prim_paths[index])
+            depth_data = self._li.get_depth_data(self._view.prim_paths[index])
+            intensity_data = self._li.get_intensity_data(self._view.prim_paths[index])
             linear_depth = self._li.get_linear_depth_data(self._view.prim_paths[index])
+            num_cols = self._li.get_num_cols(self._view.prim_paths[index])
+            num_cols_ticked = self._li.get_num_cols_ticked(self._view.prim_paths[index])
+            num_rows = self._li.get_num_rows(self._view.prim_paths[index])
+            point_cloud = self._li.get_point_cloud_data(self._view.prim_paths[index])
+            zenith = self._li.get_zenith_data(self._view.prim_paths[index])
+            
+            
             output = convert_to_torch(linear_depth, device=self.device)
+            
             self._data.output[index] = output.squeeze()
+            
+            print(f"Shapes: {azimuth.shape=}, {depth_data.shape=}, {intensity_data.shape=}, {linear_depth.shape=}, {num_cols=}, {num_cols_ticked=}, {num_rows=}, {point_cloud.shape=}, {zenith.shape=}")
+            
+            # Convert data to torch tensors and update TensorDict
+            # self._data.output_dict["azimuth"][index] = convert_to_torch(azimuth, device=self.device).squeeze()
+            # self._data.output_dict["depth"][index] = convert_to_torch(depth_data, device=self.device).squeeze()
+            # self._data.output_dict["intensity"][index] = convert_to_torch(intensity_data, device=self.device).squeeze()
+            # self._data.output_dict["linear_depth"][index] = convert_to_torch(linear_depth, device=self.device).squeeze()
+            # self._data.output_dict["num_cols"][index] = torch.tensor(num_cols, device=self.device)
+            # self._data.output_dict["num_cols_ticked"][index] = torch.tensor(num_cols_ticked, device=self.device)
+            # self._data.output_dict["num_rows"][index] = torch.tensor(num_rows, device=self.device)
+            # self._data.output_dict["point_cloud"][index] = convert_to_torch(point_cloud, device=self.device).squeeze()
+            # self._data.output_dict["zenith"][index] = convert_to_torch(zenith, device=self.device).squeeze()
+            
 
     """
     Private Helpers
@@ -341,6 +376,19 @@ class Lidar(SensorBase):
         self._data.pos_w = torch.zeros((self._view.count, 3), device=self._device)
         self._data.quat_w_world = torch.zeros((self._view.count, 4), device=self._device)
         self._data.output = torch.zeros((self._view.count, self.num_beams), device=self._device)
+        
+        # Initialize the TensorDict with placeholders
+        # self._data.output_dict = TensorDict({
+        #     "azimuth": torch.zeros((self._view.count, self.num_beams), device=self._device),
+        #     "depth": torch.zeros((self._view.count, self.num_beams), device=self._device),
+        #     "intensity": torch.zeros((self._view.count, self.num_beams), device=self._device),
+        #     "linear_depth": torch.zeros((self._view.count, self.num_beams), device=self._device),
+        #     "num_cols": torch.zeros((self._view.count,), device=self._device, dtype=torch.int32),
+        #     "num_cols_ticked": torch.zeros((self._view.count,), device=self._device, dtype=torch.int32),
+        #     "num_rows": torch.zeros((self._view.count,), device=self._device, dtype=torch.int32),
+        #     "point_cloud": torch.zeros((self._view.count, self.num_beams, 3), device=self._device),
+        #     "zenith": torch.zeros((self._view.count, self.num_beams), device=self._device),
+        # }, batch_size=self._view.count, device=self._device)
         
 
     def _update_poses(self, env_ids: Sequence[int]):

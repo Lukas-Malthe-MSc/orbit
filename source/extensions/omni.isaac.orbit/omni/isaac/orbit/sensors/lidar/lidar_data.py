@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import torch
 from dataclasses import dataclass
+from tensordict import TensorDict
 
 from .utils import convert_orientation_convention
 
@@ -40,6 +41,8 @@ class LidarData:
     For LiDAR, this might include processed data such as point clouds or enhanced distance measurements,
     depending on the sensor's capabilities and the processing applied.
     """
+    
+    output_dict: TensorDict = None
 
     ##
     # Additional Frame orientation conventions

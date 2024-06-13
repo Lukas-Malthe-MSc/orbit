@@ -73,3 +73,12 @@ class LidarCfg(SensorBaseCfg):
     
     draw_points: None | bool = False
     """Whether to draw points to visualize the lidar rays. Defaults to False."""
+    
+    high_lod : None | bool = False
+    """Don't know. Defaults to False."""
+    
+    yaw_offset: None | float = None
+    """The yaw offset of the lidar in radians. Defaults to None."""
+    
+    enable_semantics: None | bool = False
+    """Whether to enable semantic segmentation. Defaults to False."""
