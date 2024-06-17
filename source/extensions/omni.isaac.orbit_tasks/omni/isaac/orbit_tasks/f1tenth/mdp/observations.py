@@ -14,7 +14,8 @@ def lidar_ranges(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """The ranges from the given lidar sensor."""
     # extract the used quantities (to enable type-hinting)
     sensor: Lidar = env.scene.sensors[sensor_cfg.name]
-    lidar_ranges = sensor.data.output
+
+    lidar_ranges = sensor.data.output["linear_depth"]
 
     return lidar_ranges
 
@@ -22,8 +23,9 @@ def lidar_ranges_normalized(env: BaseEnv, sensor_cfg: SceneEntityCfg) -> torch.T
     """Return normalized lidar ranges with Gaussian noise."""
     # Extract the lidar sensor from the scene
     sensor: Lidar = env.scene.sensors[sensor_cfg.name]
-    lidar_ranges = sensor.data.output  # Original lidar ranges
-    
+
+    lidar_ranges = sensor.data.output["linear_depth"]
+
     # Get the min and max range from the sensor configuration
     min_range = sensor.cfg.min_range  # Minimum possible range
     max_range = sensor.cfg.max_range  # Maximum possible range

@@ -81,4 +81,4 @@ class LidarCfg(SensorBaseCfg):
     """The yaw offset of the lidar in radians. Defaults to None."""
     
     enable_semantics: None | bool = False
-    """Whether to enable semantic segmentation. Defaults to False."""
+    """Whether to enable semantic segmentation. Defaults to False. Right now semantics are not supported."""

@@ -48,7 +48,7 @@ def forward_velocity(env: RLTaskEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg(
 def lidar_min_distance(env: RLTaskEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """The min distance of the lidar scans."""
     sensor: Lidar = env.scene[sensor_cfg.name]
-    lidar_ranges = sensor.data.output
+    lidar_ranges = sensor.data.output["linear_depth"]
     min_distances = torch.min(lidar_ranges, dim=1).values
     return 1/min_distances
 

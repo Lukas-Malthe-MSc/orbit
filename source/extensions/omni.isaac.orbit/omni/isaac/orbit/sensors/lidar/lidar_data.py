@@ -33,16 +33,19 @@ class LidarData:
     # LiDAR data
     ##
 
-
-    # output: TensorDict = None
-    output: torch.Tensor  = None
-    """The retrieved sensor data with sensor types as key.
-
-    For LiDAR, this might include processed data such as point clouds or enhanced distance measurements,
-    depending on the sensor's capabilities and the processing applied.
-    """
+    output: TensorDict = None
+    """The retrieved sensor data with data types as key. The available keys are:
     
-    output_dict: TensorDict = None
+    - ``"azimuth"``: The azimuth angle in radians for each column.
+    - ``"depth"``: The distance from the sensor to the hit for each beam in uint16 and scaled by min and max distance.
+    - ``"intensity"``: The observed specular intensity of each beam, 255 if hit, 0 if not.
+    - ``"linear_depth"``: The distance from the sensor to the hit for each beam in meters.
+    - ``"num_cols"``: The number of vertical scans of the sensor, 0 if error occurred.
+    - ``"num_cols_ticked"``: The number of vertical scans the sensor completed in the last simulation step, 0 if error occurred. Generally only useful for lidars with a non-zero rotation speed.
+    - ``"num_rows"``: The number of horizontal scans of the sensor, 0 if error occurred.
+    - ``"point_cloud"``: The hit position in xyz relative to the sensor origin, not accounting for individual ray offsets.
+    - ``"zenith"``: The zenith angle in radians for each row.
+    """
 
     ##
     # Additional Frame orientation conventions

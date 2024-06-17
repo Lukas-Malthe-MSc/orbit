@@ -17,7 +17,7 @@ def lidar_distance_limit(env: RLTaskEnv, distance_threshold, sensor_cfg: SceneEn
     """The ranges from the given lidar sensor."""
     # extract the used quantities (to enable type-hinting)
     sensor: Lidar = env.scene[sensor_cfg.name]
-    lidar_ranges = sensor.data.output
+    lidar_ranges = sensor.data.output["linear_depth"]
 
     if env.collision_beams is None:
         env.collision_beams = get_scale_vector()
