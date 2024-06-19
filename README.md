@@ -87,7 +87,9 @@ graph TD;
     class Y1 red;
 ```
 ## Installation and Setup
-It is recommended to use the docker setup by initializing the docker:
+As of the time of writing the Orbit repository has changed to Isaac Lab. This means that the installation and setup documentation on the Orbit website is changed since this was forked. We don't remeber the exact steps to set up the environment nativly.
+
+This means that the only option for is to use the docker setup by initializing the docker:
    
    ```bash
    docker/container.sh start
@@ -141,6 +143,25 @@ To run inference with a trained model, use the following example command:
 - **`--checkpoint model_999.pt`**: Specifies the checkpoint file to load the trained model. Replace `model_999.pt` with the path to the desired model checkpoint.
 
 These commands will train and test your DRL agent within the F1TENTH environment using the Orbit framework. Make sure to replace the placeholders with your actual run identifiers and model checkpoints.
+
+
+## Recommendations for Continuing this Work
+
+This project was developed using the Orbit framework, which has recently been renamed to Isaac Lab. With this new release, significant changes have been made to the framework, rendering the code in this repository incompatible with the new Isaac Lab framework.
+
+To continue this work, we recommend the following steps:
+
+1. **Familiarize Yourself with Isaac Lab**: Start by exploring the new Isaac Lab framework and its features. Read the documentation, go through the tutorials, and experiment with some examples to understand the capabilities of the updated framework.
+
+2. **Re-implement the F1TENTH Racing Environment**:
+   - **Import F1TENTH Assets**: Begin by importing the F1TENTH assets and spawning them in the scene.
+   - **Integrate Modules**: The next steps involve integrating the lidar sensor module and Ackermann steering actions. Refer to the specific files in the directory structure mentioned above to guide your focus.
+
+By following these steps, you can adapt and continue the project within the new Isaac Lab framework effectively.
+
+
+
+
 
 ---
 
